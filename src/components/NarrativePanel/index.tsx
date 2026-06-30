@@ -153,7 +153,9 @@ export default function NarrativePanel() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current && messagesEndRef.current.parentNode) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [chatMessages]);
 
   const handleSaveGame = () => {

@@ -71,6 +71,7 @@ export default function GameStart() {
   const [isImporting, setIsImporting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isStarting, setIsStarting] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
 
   const handlePlayerChange = (field: keyof PlayerFormData, value: string) => {
     setPlayerData(prev => ({ ...prev, [field]: value }));
@@ -90,50 +91,116 @@ export default function GameStart() {
       return;
     }
     if (!aiForm.apiKey.trim()) {
+      setShowAiPanel(true);
       alert('请先配置AI服务API密钥');
       return;
     }
 
+    setAISettings({
+      apiKey: aiForm.apiKey,
+      flashModel: aiForm.flashModel,
+      proModel: aiForm.proModel,
+      apiBaseUrl: aiForm.apiBaseUrl,
+    });
+
     setIsImporting(true);
+    setIsStarting(true);
+
     try {
-      setAISettings({
-        apiKey: aiForm.apiKey,
-        flashModel: aiForm.flashModel,
-        proModel: aiForm.proModel,
-        apiBaseUrl: aiForm.apiBaseUrl,
+      const defaultPlayer = {
+        name: '玩家',
+        age: '30',
+        gender: '男',
+        title: '董事长',
+        background: quickImportText,
+      };
+
+      const defaultCompany = {
+        name: '星辰科技',
+        history: quickImportText,
+        status: '初创期',
+        business: '科技/互联网',
+        headquarters: '北京',
+        startYear: '2020',
+        startMonth: '01',
+        startDay: '01',
+      };
+
+      useGameStore.getState().setInitialSetup({
+        player: defaultPlayer,
+        company: defaultCompany,
       });
 
-      const result = await generateInitialData(quickImportText);
+      const initData = await generateInitialGameData(defaultPlayer, defaultCompany);
 
-      if (result.player) {
-        setPlayerData(prev => ({
-          ...prev,
-          name: result.player.name || prev.name,
-          title: result.player.title || prev.title,
-          background: result.player.background || prev.background,
-          age: result.player.age || prev.age,
-          gender: result.player.gender || prev.gender,
-        }));
+      if (initData.company && Object.keys(initData.company).length > 0) {
+        useGameStore.getState().setCompany(initData.company as any);
       }
 
-      if (result.company) {
-        setCompanyData(prev => ({
-          ...prev,
-          name: result.company.name || prev.name,
-          business: result.company.industry || prev.business,
-          history: result.company.history || prev.history,
-          status: result.company.status || prev.status,
-          headquarters: result.company.headquarters || prev.headquarters,
-          startYear: result.company.startYear || prev.startYear,
-          startMonth: result.company.startMonth || prev.startMonth,
-          startDay: result.company.startDay || prev.startDay,
-        }));
+      if (initData.playerInfo && Object.keys(initData.playerInfo).length > 0) {
+        useGameStore.getState().setPlayerInfo(initData.playerInfo as unknown as PlayerInfo);
       }
 
-      setCurrentStep(1);
+      if (initData.products && initData.products.length > 0) {
+        useGameStore.getState().setProducts(initData.products as any);
+      }
+
+      if (initData.employees && initData.employees.length > 0) {
+        useGameStore.getState().setEmployees(initData.employees as any);
+      }
+
+      if (initData.finance && Object.keys(initData.finance).length > 0) {
+        useGameStore.getState().setFinance(initData.finance as any);
+      }
+
+      if (initData.strategies && initData.strategies.length > 0) {
+        useGameStore.getState().setStrategies(initData.strategies as any);
+      }
+
+      if (initData.operations && initData.operations.length > 0) {
+        useGameStore.getState().setOperations(initData.operations as any);
+      }
+
+      if (initData.innovations && initData.innovations.length > 0) {
+        useGameStore.getState().setInnovations(initData.innovations as any);
+      }
+
+      if (initData.news && initData.news.length > 0) {
+        useGameStore.getState().setNews(initData.news as any);
+      }
+
+      if (initData.competitors && initData.competitors.length > 0) {
+        useGameStore.getState().setCompetitors(initData.competitors as any);
+      }
+
+      if (initData.npcs && initData.npcs.length > 0) {
+        useGameStore.getState().setNPCs(initData.npcs as any);
+      }
+
+      if (initData.shareholdings && initData.shareholdings.length > 0) {
+        useGameStore.getState().setShareholdings(initData.shareholdings as any);
+      }
+
+      if (initData.newTime) {
+        useGameStore.getState().setGameTime(initData.newTime);
+      }
+
+      if (initData.narrative) {
+        useGameStore.getState().setNarrativeText(initData.narrative);
+        useGameStore.getState().addChatMessage({
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: initData.narrative,
+          timestamp: new Date().toLocaleString('zh-CN'),
+        });
+      }
+
+      useGameStore.getState().setIsDataGenerated(true);
+      useGameStore.getState().setGameStarted(true);
     } catch (error) {
-      console.error('导入失败:', error);
+      console.error('快速导入失败:', error);
       alert('导入失败，请检查AI配置或网络连接');
+      setIsStarting(false);
     } finally {
       setIsImporting(false);
     }
@@ -261,20 +328,26 @@ export default function GameStart() {
     { id: 0, label: '快速导入', icon: FileText },
     { id: 1, label: '角色信息', icon: User },
     { id: 2, label: '公司信息', icon: Building },
-    { id: 3, label: 'AI配置', icon: Settings },
-    { id: 4, label: '开局设置', icon: Calendar },
+    { id: 3, label: '开局设置', icon: Calendar },
   ];
 
   return (
     <div className="min-h-screen bg-primary flex items-center justify-center p-8 overflow-y-auto">
       <div className="w-full max-w-3xl py-8">
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 relative">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Sparkles className="w-8 h-8 text-accent-gold" />
             <h1 className="text-3xl font-bold text-white">开启新游戏</h1>
             <Sparkles className="w-8 h-8 text-accent-gold" />
           </div>
           <p className="text-text-secondary">创建您的角色和公司，开始您的商业传奇</p>
+          <button
+            onClick={() => setShowAiPanel(true)}
+            className="absolute top-0 right-0 px-4 py-2 bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors flex items-center gap-2"
+          >
+            <Settings className="w-4 h-4" />
+            AI配置
+          </button>
         </div>
 
         <div className="flex items-center justify-center flex-wrap gap-2 mb-8">
@@ -510,150 +583,6 @@ export default function GameStart() {
           {currentStep === 3 && (
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-6">
-                <Settings className="w-6 h-6 text-accent-gold" />
-                <h2 className="text-xl font-bold text-white">AI服务配置</h2>
-              </div>
-
-              <p className="text-text-secondary text-sm">
-                配置AI服务以支持游戏中的叙事推演、数据生成等功能。
-              </p>
-
-              <div>
-                <label className="block text-sm text-text-secondary mb-2">API 密钥</label>
-                <input
-                  type="password"
-                  value={aiForm.apiKey}
-                  onChange={(e) => handleAIChange('apiKey', e.target.value)}
-                  placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-text-muted focus:outline-none focus:border-accent-gold/50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-text-secondary mb-2">API 基础地址</label>
-                <input
-                  type="text"
-                  value={aiForm.apiBaseUrl}
-                  onChange={(e) => handleAIChange('apiBaseUrl', e.target.value)}
-                  placeholder="https://api.openai.com/v1"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-text-muted focus:outline-none focus:border-accent-gold/50"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-text-secondary mb-2">Flash 模型</label>
-                  <input
-                    type="text"
-                    value={aiForm.flashModel}
-                    onChange={(e) => handleAIChange('flashModel', e.target.value)}
-                    placeholder="gpt-4o-mini"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-text-muted focus:outline-none focus:border-accent-gold/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-text-secondary mb-2">Pro 模型</label>
-                  <input
-                    type="text"
-                    value={aiForm.proModel}
-                    onChange={(e) => handleAIChange('proModel', e.target.value)}
-                    placeholder="gpt-4o"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-text-muted focus:outline-none focus:border-accent-gold/50"
-                  />
-                </div>
-              </div>
-
-              <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
-                <h3 className="text-sm font-semibold text-white mb-2">常用预设</h3>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => {
-                      setAiForm(prev => ({
-                        ...prev,
-                        apiBaseUrl: 'https://api.openai.com/v1',
-                        flashModel: 'gpt-4o-mini',
-                        proModel: 'gpt-4o',
-                      }));
-                    }}
-                    className="px-3 py-1.5 text-sm bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    OpenAI
-                  </button>
-                  <button
-                    onClick={() => {
-                      setAiForm(prev => ({
-                        ...prev,
-                        apiBaseUrl: 'https://api.deepseek.com/v1',
-                        flashModel: 'deepseek-v4-flash',
-                        proModel: 'deepseek-v4-pro',
-                      }));
-                    }}
-                    className="px-3 py-1.5 text-sm bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    DeepSeek V4
-                  </button>
-                  <button
-                    onClick={() => {
-                      setAiForm(prev => ({
-                        ...prev,
-                        apiBaseUrl: 'https://api.deepseek.com/v1',
-                        flashModel: 'deepseek-r1-flash',
-                        proModel: 'deepseek-r1',
-                      }));
-                    }}
-                    className="px-3 py-1.5 text-sm bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    DeepSeek R1
-                  </button>
-                  <button
-                    onClick={() => {
-                      setAiForm(prev => ({
-                        ...prev,
-                        apiBaseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-                        flashModel: 'qwen-plus',
-                        proModel: 'qwen-max',
-                      }));
-                    }}
-                    className="px-3 py-1.5 text-sm bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    通义千问
-                  </button>
-                  <button
-                    onClick={() => {
-                      setAiForm(prev => ({
-                        ...prev,
-                        apiBaseUrl: 'https://aip.baidubce.com/v1',
-                        flashModel: 'ernie-lite',
-                        proModel: 'ernie-4.0',
-                      }));
-                    }}
-                    className="px-3 py-1.5 text-sm bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    文心一言
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex justify-between">
-                <button
-                  onClick={() => setCurrentStep(2)}
-                  className="px-6 py-3 bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  ← 上一步
-                </button>
-                <button
-                  onClick={() => setCurrentStep(4)}
-                  className="px-6 py-3 bg-accent-gold/20 text-accent-gold rounded-lg hover:bg-accent-gold/30 transition-colors"
-                >
-                  下一步 →
-                </button>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 4 && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 mb-6">
                 <Calendar className="w-6 h-6 text-accent-gold" />
                 <h2 className="text-xl font-bold text-white">开局设置</h2>
               </div>
@@ -756,6 +685,158 @@ export default function GameStart() {
             </div>
           )}
         </div>
+
+        {showAiPanel && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="glass-card p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <Settings className="w-6 h-6 text-accent-gold" />
+                  <h2 className="text-xl font-bold text-white">AI服务配置</h2>
+                </div>
+                <button
+                  onClick={() => setShowAiPanel(false)}
+                  className="px-3 py-1.5 text-text-secondary hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-text-secondary mb-2">API 密钥</label>
+                  <input
+                    type="password"
+                    value={aiForm.apiKey}
+                    onChange={(e) => handleAIChange('apiKey', e.target.value)}
+                    placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-text-muted focus:outline-none focus:border-accent-gold/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-text-secondary mb-2">API 基础地址</label>
+                  <input
+                    type="text"
+                    value={aiForm.apiBaseUrl}
+                    onChange={(e) => handleAIChange('apiBaseUrl', e.target.value)}
+                    placeholder="https://api.openai.com/v1"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-text-muted focus:outline-none focus:border-accent-gold/50"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-2">Flash 模型</label>
+                    <input
+                      type="text"
+                      value={aiForm.flashModel}
+                      onChange={(e) => handleAIChange('flashModel', e.target.value)}
+                      placeholder="gpt-4o-mini"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-text-muted focus:outline-none focus:border-accent-gold/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-2">Pro 模型</label>
+                    <input
+                      type="text"
+                      value={aiForm.proModel}
+                      onChange={(e) => handleAIChange('proModel', e.target.value)}
+                      placeholder="gpt-4o"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-text-muted focus:outline-none focus:border-accent-gold/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
+                  <h3 className="text-sm font-semibold text-white mb-2">常用预设</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => {
+                        setAiForm(prev => ({
+                          ...prev,
+                          apiBaseUrl: 'https://api.openai.com/v1',
+                          flashModel: 'gpt-4o-mini',
+                          proModel: 'gpt-4o',
+                        }));
+                      }}
+                      className="px-3 py-1.5 text-sm bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      OpenAI
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAiForm(prev => ({
+                          ...prev,
+                          apiBaseUrl: 'https://api.deepseek.com/v1',
+                          flashModel: 'deepseek-v4-flash',
+                          proModel: 'deepseek-v4-pro',
+                        }));
+                      }}
+                      className="px-3 py-1.5 text-sm bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      DeepSeek V4
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAiForm(prev => ({
+                          ...prev,
+                          apiBaseUrl: 'https://api.deepseek.com/v1',
+                          flashModel: 'deepseek-r1-flash',
+                          proModel: 'deepseek-r1',
+                        }));
+                      }}
+                      className="px-3 py-1.5 text-sm bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      DeepSeek R1
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAiForm(prev => ({
+                          ...prev,
+                          apiBaseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+                          flashModel: 'qwen-plus',
+                          proModel: 'qwen-max',
+                        }));
+                      }}
+                      className="px-3 py-1.5 text-sm bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      通义千问
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAiForm(prev => ({
+                          ...prev,
+                          apiBaseUrl: 'https://aip.baidubce.com/v1',
+                          flashModel: 'ernie-lite',
+                          proModel: 'ernie-4.0',
+                        }));
+                      }}
+                      className="px-3 py-1.5 text-sm bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      文心一言
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setAISettings({
+                      apiKey: aiForm.apiKey,
+                      flashModel: aiForm.flashModel,
+                      proModel: aiForm.proModel,
+                      apiBaseUrl: aiForm.apiBaseUrl,
+                    });
+                    setShowAiPanel(false);
+                  }}
+                  className="w-full px-6 py-3 bg-accent-gold text-primary font-bold rounded-lg hover:bg-accent-gold/80 transition-colors"
+                >
+                  保存配置
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

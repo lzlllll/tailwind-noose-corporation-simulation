@@ -84,11 +84,17 @@ export async function callProModel(prompt: string): Promise<string> {
       }),
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API错误 ${response.status}:`, errorText);
+      throw new Error(`API返回错误状态: ${response.status}`);
+    }
+
     const data = await response.json();
-    return data.choices[0]?.message?.content || '无响应';
+    return data.choices?.[0]?.message?.content || '无响应';
   } catch (error) {
     console.error('Pro模型调用失败:', error);
-    return '模型调用失败，请检查API配置';
+    throw error;
   }
 }
 
