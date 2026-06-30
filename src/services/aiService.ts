@@ -579,10 +579,17 @@ export async function generateInitialGameData(playerInfo: {
 总部地点：${companyInfo.headquarters}
 开局时间：${startTime}
 
-请生成以下完整的初始数据，并以严格的JSON格式返回（只返回JSON，不要其他文字）：
+请按以下格式返回内容（使用块标记格式）：
+
+【叙事正文】
+请在这里写开局叙事，描述公司当前的状况、面临的机遇和挑战、玩家的处境等，200-300字。
+
+[TIME]
+${startTime}
+[/TIME]
+
+[ADD]
 {
-  "narrative": "开局叙事正文，描述公司当前的状况、面临的机遇和挑战、玩家的处境等，200-300字",
-  "newTime": "${startTime}",
   "company": {
     "id": "comp-001",
     "name": "${companyInfo.name}",
@@ -630,33 +637,45 @@ export async function generateInitialGameData(playerInfo: {
   "npcs": [NPC数组，3-5个关键人物，每人包含id,name,avatar,role,company,relationship,personality,specialty,systemPrompt,memory,isFirstMeeting,chatHistory],
   "shareholdings": [股权结构数组]
 }
+[/ADD]
 
-请确保数据合理，符合"${companyInfo.status}"阶段的公司规模。`;
+请确保数据合理，符合"${companyInfo.status}"阶段的公司规模。
+注意：[ADD]块内必须是严格有效的JSON格式。`;
 
   try {
     const result = await callProModel(prompt);
 
-    const jsonMatch = result.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      return parsed as GameInitData;
+    const narrativeMatch = result.match(/【叙事正文】\s*\n([\s\S]*?)(?=\n\[|\n*$)/);
+    const narrative = narrativeMatch ? narrativeMatch[1].trim() : '游戏开始，请输入您的决策指令。';
+
+    const timeMatch = result.match(/\[TIME\]\s*([\s\S]*?)\s*\[\/TIME\]/);
+    const newTime = timeMatch ? timeMatch[1].trim() : startTime;
+
+    const addMatch = result.match(/\[ADD\]\s*([\s\S]*?)\s*\[\/ADD\]/);
+    let addData: Record<string, any> = {};
+    if (addMatch) {
+      try {
+        addData = JSON.parse(addMatch[1]);
+      } catch (e) {
+        console.error('解析ADD块失败:', e);
+      }
     }
 
     return {
-      narrative: '游戏开始，请输入您的决策指令。',
-      newTime: startTime,
-      company: {},
-      products: [],
-      finance: {},
-      employees: [],
-      strategies: [],
-      operations: [],
-      innovations: [],
-      news: [],
-      competitors: [],
-      npcs: [],
-      shareholdings: [],
-      playerInfo: {},
+      narrative,
+      newTime,
+      company: addData.company || {},
+      playerInfo: addData.playerInfo || {},
+      products: addData.products || [],
+      employees: addData.employees || [],
+      finance: addData.finance || {},
+      strategies: addData.strategies || [],
+      operations: addData.operations || [],
+      innovations: addData.innovations || [],
+      news: addData.news || [],
+      competitors: addData.competitors || [],
+      npcs: addData.npcs || [],
+      shareholdings: addData.shareholdings || [],
     };
   } catch (error) {
     console.error('生成游戏初始数据失败:', error);
