@@ -82,18 +82,18 @@ export default function Organization() {
                     <p className="text-text-muted text-xs">{dept.head} · {dept.employees}人</p>
                   </div>
                 </div>
-                <ChevronRight 
-                  className={`text-text-muted transition-transform ${expandedDept === dept.id ? 'rotate-90' : ''}`} 
-                  size={20} 
+                <ChevronRight
+                  className={`text-text-muted transition-transform ${expandedDept === dept.id ? 'rotate-90' : ''}`}
+                  size={20}
                 />
               </button>
               {expandedDept === dept.id && (
                 <div className="p-4 bg-white/5 border-t border-white/10">
                   <p className="text-text-secondary text-sm">部门预算: {formatCurrency(dept.budget)}</p>
                   <div className="mt-3 progress-bar">
-                    <div 
-                      className="progress-fill" 
-                      style={{ width: `${Math.min((dept.employees / 1000) * 100, 100)}%` }} 
+                    <div
+                      className="progress-fill"
+                      style={{ width: `${Math.min((dept.employees / 1000) * 100, 100)}%` }}
                     />
                   </div>
                 </div>
@@ -175,9 +175,9 @@ export default function Organization() {
                 <span className="text-text-secondary text-xs">绩效</span>
                 <div className="flex items-center gap-2">
                   <div className="w-16 progress-bar">
-                    <div 
+                    <div
                       className="h-full bg-accent-blue rounded-full"
-                      style={{ width: `${employee.performance}%` }} 
+                      style={{ width: `${employee.performance}%` }}
                     />
                   </div>
                   <span className="text-white text-xs">{employee.performance}%</span>
@@ -271,9 +271,9 @@ export default function Organization() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-20 progress-bar">
-                    <div 
+                    <div
                       className="h-full bg-gradient-to-r from-accent-green to-accent-blue rounded-full"
-                      style={{ width: `${employee.performance}%` }} 
+                      style={{ width: `${employee.performance}%` }}
                     />
                   </div>
                   <span className="text-white text-sm w-8">{employee.performance}%</span>
@@ -343,9 +343,9 @@ export default function Organization() {
                 <span className="text-text-secondary text-sm">持股比例</span>
                 <div className="flex items-center gap-2 mt-1">
                   <div className="w-20 progress-bar">
-                    <div 
+                    <div
                       className="h-full bg-accent-gold rounded-full"
-                      style={{ width: `${sub.ownership}%` }} 
+                      style={{ width: `${sub.ownership}%` }}
                     />
                   </div>
                   <span className="text-accent-gold font-semibold">{sub.ownership}%</span>
@@ -373,11 +373,10 @@ export default function Organization() {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                isActive 
-                  ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30' 
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${isActive
+                  ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
                   : 'text-text-secondary hover:text-white hover:bg-white/5'
-              }`}
+                }`}
             >
               <Icon size={18} />
               <span className="font-medium">{tab.label}</span>

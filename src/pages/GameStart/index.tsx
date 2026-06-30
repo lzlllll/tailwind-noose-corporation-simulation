@@ -45,7 +45,7 @@ export default function GameStart() {
     name: '',
     age: '',
     gender: 'male',
-    title: '董事长',
+    title: '',
     background: '',
   });
 
@@ -55,9 +55,9 @@ export default function GameStart() {
     status: '',
     business: '',
     headquarters: '',
-    startYear: '2000',
-    startMonth: '01',
-    startDay: '06',
+    startYear: '',
+    startMonth: '',
+    startDay: '',
   });
 
   const [aiForm, setAiForm] = useState<AISettingsForm>({
@@ -120,9 +120,9 @@ export default function GameStart() {
         status: '',
         business: '',
         headquarters: '',
-        startYear: '2000',
-        startMonth: '01',
-        startDay: '01',
+        startYear: '',
+        startMonth: '',
+        startDay: '',
       };
 
       const initData = await generateInitialGameData(defaultPlayer, defaultCompany);

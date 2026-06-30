@@ -2,6 +2,132 @@ import { useGameStore } from '@/stores/gameStore';
 import { SYSTEM_PROMPT } from './systemPrompt';
 import { NPC } from '@/data/mockData';
 
+function parsePKVValue(raw: string): any {
+  const val = raw.trim();
+  if (val === 'true') return true;
+  if (val === 'false') return false;
+  if (val === '' || val === 'null' || val === 'undefined') return null;
+  const num = Number(val);
+  if (!isNaN(num) && val !== '') return num;
+  return val;
+}
+
+export function parsePKV(text: string): Record<string, any> {
+  const result: Record<string, any> = {};
+  const lines = text.split('\n');
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.startsWith('//') || trimmed.startsWith('#')) continue;
+
+    const colonIdx = trimmed.indexOf(':');
+    if (colonIdx <= 0) continue;
+
+    const path = trimmed.slice(0, colonIdx).trim();
+    const valueStr = trimmed.slice(colonIdx + 1).trim();
+    const value = parsePKVValue(valueStr);
+
+    const parts = path.split('.').filter(p => p !== '');
+    let current: any = result;
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      const isLast = i === parts.length - 1;
+      const isArrayIndex = /^\d+$/.test(part);
+
+      if (isLast) {
+        if (isArrayIndex) {
+          const idx = parseInt(part, 10);
+          if (!Array.isArray(current)) {
+            console.warn(`路径 ${path} 中 ${part} 是数组索引但父级不是数组`);
+            break;
+          }
+          current[idx] = value;
+        } else {
+          current[part] = value;
+        }
+      } else {
+        const nextPart = parts[i + 1];
+        const nextIsArray = /^\d+$/.test(nextPart);
+
+        if (isArrayIndex) {
+          const idx = parseInt(part, 10);
+          if (!Array.isArray(current)) {
+            console.warn(`路径 ${path} 中 ${part} 是数组索引但父级不是数组`);
+            break;
+          }
+          if (!current[idx]) {
+            current[idx] = nextIsArray ? [] : {};
+          }
+          current = current[idx];
+        } else {
+          if (!current[part]) {
+            current[part] = nextIsArray ? [] : {};
+          }
+          current = current[part];
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+function extractBlock(text: string, blockName: string): string | null {
+  const upperName = blockName.toUpperCase();
+  const patterns = [
+    new RegExp(`===\\s*${upperName}\\s*===\\s*\\n([\\s\\S]*?)(?=\\n===\\s*END_${upperName}\\s*===|$)`, 'i'),
+    new RegExp(`\\[${upperName}\\]\\s*\\n([\\s\\S]*?)(?=\\n\\[/${upperName}\\]|$)`, 'i'),
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match && match[1].trim()) {
+      return match[1].trim();
+    }
+  }
+
+  return null;
+}
+
+function formatDataAsPKV(data: Record<string, unknown>, prefix: string = ''): string {
+  const lines: string[] = [];
+
+  function formatValue(value: unknown, currentPath: string) {
+    if (value === null || value === undefined) {
+      lines.push(`${currentPath}: null`);
+    } else if (typeof value === 'object') {
+      if (Array.isArray(value)) {
+        if (value.length === 0) {
+          lines.push(`${currentPath}: []`);
+        } else {
+          value.forEach((item, index) => {
+            formatValue(item, `${currentPath}.${index}`);
+          });
+        }
+      } else {
+        const keys = Object.keys(value);
+        if (keys.length === 0) {
+          lines.push(`${currentPath}: {}`);
+        } else {
+          keys.forEach(key => {
+            formatValue((value as Record<string, unknown>)[key], currentPath ? `${currentPath}.${key}` : key);
+          });
+        }
+      }
+    } else {
+      lines.push(`${currentPath}: ${String(value)}`);
+    }
+  }
+
+  Object.keys(data).forEach(key => {
+    formatValue(data[key], prefix ? `${prefix}.${key}` : key);
+  });
+
+  return lines.join('\n');
+}
+
 export interface DataOperation {
   type: 'modify' | 'add' | 'delete';
   target: string;
@@ -111,10 +237,10 @@ function extractRelevantData(modules: string[], gameData: Record<string, unknown
 function parseDataOperations(response: string, validModules: string[]): DataOperation[] {
   const operations: DataOperation[] = [];
 
-  const modifyMatch = response.match(/\[MODIFY\]\s*([\s\S]*?)\s*\[\/MODIFY\]/);
-  if (modifyMatch) {
+  const modifyBlock = extractBlock(response, 'MODIFY');
+  if (modifyBlock) {
     try {
-      const data = JSON.parse(modifyMatch[1]);
+      const data = parsePKV(modifyBlock);
       Object.keys(data).forEach((target) => {
         if (validModules.includes(target)) {
           operations.push({
@@ -126,15 +252,15 @@ function parseDataOperations(response: string, validModules: string[]): DataOper
           console.warn(`忽略无效的MODIFY目标模块: ${target}`);
         }
       });
-    } catch {
-      console.error('解析MODIFY操作失败');
+    } catch (e) {
+      console.error('解析MODIFY操作失败:', e);
     }
   }
 
-  const addMatch = response.match(/\[ADD\]\s*([\s\S]*?)\s*\[\/ADD\]/);
-  if (addMatch) {
+  const addBlock = extractBlock(response, 'ADD');
+  if (addBlock) {
     try {
-      const data = JSON.parse(addMatch[1]);
+      const data = parsePKV(addBlock);
       Object.keys(data).forEach((target) => {
         if (validModules.includes(target)) {
           operations.push({
@@ -146,15 +272,15 @@ function parseDataOperations(response: string, validModules: string[]): DataOper
           console.warn(`忽略无效的ADD目标模块: ${target}`);
         }
       });
-    } catch {
-      console.error('解析ADD操作失败');
+    } catch (e) {
+      console.error('解析ADD操作失败:', e);
     }
   }
 
-  const deleteMatch = response.match(/\[DELETE\]\s*([\s\S]*?)\s*\[\/DELETE\]/);
-  if (deleteMatch) {
+  const deleteBlock = extractBlock(response, 'DELETE');
+  if (deleteBlock) {
     try {
-      const data = JSON.parse(deleteMatch[1]);
+      const data = parsePKV(deleteBlock);
       Object.keys(data).forEach((target) => {
         if (validModules.includes(target)) {
           operations.push({
@@ -166,8 +292,8 @@ function parseDataOperations(response: string, validModules: string[]): DataOper
           console.warn(`忽略无效的DELETE目标模块: ${target}`);
         }
       });
-    } catch {
-      console.error('解析DELETE操作失败');
+    } catch (e) {
+      console.error('解析DELETE操作失败:', e);
     }
   }
 
@@ -178,9 +304,9 @@ function parseDataOperations(response: string, validModules: string[]): DataOper
 }
 
 function parseTime(response: string): string {
-  const timeMatch = response.match(/\[TIME\]\s*([\s\S]*?)\s*\[\/TIME\]/);
-  if (timeMatch) {
-    return timeMatch[1].trim();
+  const timeBlock = extractBlock(response, 'TIME');
+  if (timeBlock) {
+    return timeBlock.trim();
   }
   return '';
 }
@@ -188,7 +314,7 @@ function parseTime(response: string): string {
 export async function generateNarrative(playerDecision: string, gameData: Record<string, unknown>, contextParams?: ContextParams): Promise<AIResponse> {
   const dataModules = Object.keys(gameData);
   const validDataModules = ['company', 'products', 'finance', 'employees', 'strategies', 'operations', 'innovations', 'gameTime', 'news', 'competitors', 'npcs', 'playerInfo'];
-  const gameTime = (gameData.gameTime as string) || '2000-01-06 09:00:00';
+  const gameTime = (gameData.gameTime as string) || '';
 
   const flashPrompt = `作为企业数据分析师，请分析以下玩家决策可能涉及哪些数据模块：
 
@@ -244,54 +370,85 @@ ${contextSection}
 ${validDataModules.map((m) => `- ${m}`).join('\n')}
 
 【涉及数据】
-${JSON.stringify(relevantData, null, 2)}
+以下是涉及的数据，使用路径键值对格式：
+${formatDataAsPKV(relevantData)}
 
 【玩家决策】
 ${playerDecision}
 
 请根据上述信息进行推演。在推演时：
 1. 如果有历史上下文，请结合上下文保持连贯性
-2. 每次回复后，用[SUMMARY]标记块提炼50字以内的上下文摘要，供后续推演参考
-3. 严格按照系统提示中的输出格式输出
+2. 每次回复后，用=== SUMMARY ===块提炼50字以内的上下文摘要，供后续推演参考
+3. 严格按照以下输出格式输出
 
 输出格式：
-[TIME]
+=== TIME ===
 YYYY-MM-DD HH:mm:ss
-[/TIME]
+=== END_TIME ===
 
-[SUMMARY]
+=== SUMMARY ===
 50字以内的上下文摘要
-[/SUMMARY]
+=== END_SUMMARY ===
 
 叙事正文内容...
 
-[MODIFY]
-{ ... }
-[/MODIFY]
+=== MODIFY ===
+使用路径键值对格式，每行一个字段
+company.name: 新公司名
+finance.cash: 新现金数字
+=== END_MODIFY ===
 
-[ADD]
-{ ... }
-[/ADD]
+=== ADD ===
+使用路径键值对格式，每行一个字段
+news.0.id: news-new
+news.0.title: 新闻标题
+news.0.source: 来源
+news.0.date: 日期
+news.0.impact: positive
+news.0.summary: 新闻摘要
+=== END_ADD ===
 
-[DELETE]
-{ ... }
-[/DELETE]`;
+=== DELETE ===
+使用路径键值对格式
+employees: [emp-001, emp-002]
+=== END_DELETE ===
+
+重要规则：
+1. 数据块使用 === 块名 === 和 === END_块名 === 包裹
+2. 数据使用路径键值对格式，每行一个字段
+3. 用点号.表示层级，用数字索引表示数组
+4. 字符串不需要引号，数字直接写
+5. 布尔值用true或false
+6. MODIFY用于更新现有数据，ADD用于新增数据，DELETE用于删除数据
+7. 没有数据变更时可以省略对应的数据块`;
 
   const proResult = await callProModel(proPrompt);
+  console.log('Pro模型返回:', proResult);
 
   const operations = parseDataOperations(proResult, validDataModules);
   const newTime = parseTime(proResult);
 
-  const summaryMatch = proResult.match(/\[SUMMARY\]\s*([\s\S]*?)\s*\[\/SUMMARY\]/);
-  const extractedSummary = summaryMatch ? summaryMatch[1].trim() : undefined;
+  const summaryBlock = extractBlock(proResult, 'SUMMARY');
+  const extractedSummary = summaryBlock ? summaryBlock.trim() : undefined;
 
-  const narrative = proResult
-    .replace(/\[TIME\][\s\S]*?\[\/TIME\]/g, '')
-    .replace(/\[SUMMARY\][\s\S]*?\[\/SUMMARY\]/g, '')
-    .replace(/\[MODIFY\][\s\S]*?\[\/MODIFY\]/g, '')
-    .replace(/\[ADD\][\s\S]*?\[\/ADD\]/g, '')
-    .replace(/\[DELETE\][\s\S]*?\[\/DELETE\]/g, '')
-    .trim();
+  let narrative = proResult;
+  const blockPatterns = [
+    /=== TIME ===[\s\S]*?=== END_TIME ===/gi,
+    /=== SUMMARY ===[\s\S]*?=== END_SUMMARY ===/gi,
+    /=== MODIFY ===[\s\S]*?=== END_MODIFY ===/gi,
+    /=== ADD ===[\s\S]*?=== END_ADD ===/gi,
+    /=== DELETE ===[\s\S]*?=== END_DELETE ===/gi,
+    /\[TIME\][\s\S]*?\[\/TIME\]/gi,
+    /\[SUMMARY\][\s\S]*?\[\/SUMMARY\]/gi,
+    /\[MODIFY\][\s\S]*?\[\/MODIFY\]/gi,
+    /\[ADD\][\s\S]*?\[\/ADD\]/gi,
+    /\[DELETE\][\s\S]*?\[\/DELETE\]/gi,
+  ];
+
+  for (const pattern of blockPatterns) {
+    narrative = narrative.replace(pattern, '');
+  }
+  narrative = narrative.trim();
 
   return {
     narrative,
@@ -560,87 +717,194 @@ export async function generateInitialGameData(playerInfo: {
   startMonth: string;
   startDay: string;
 }): Promise<GameInitData> {
-  const startTime = `${companyInfo.startYear}-${companyInfo.startMonth.padStart(2, '0')}-${companyInfo.startDay.padStart(2, '0')} 09:00:00`;
+  let startTime = '';
+  if (companyInfo.startYear && companyInfo.startMonth && companyInfo.startDay) {
+    startTime = `${companyInfo.startYear}-${companyInfo.startMonth.padStart(2, '0')}-${companyInfo.startDay.padStart(2, '0')} 09:00:00`;
+  }
 
-  const prompt = `你是一个企业经营模拟游戏的AI主持人。请根据以下玩家和公司信息，生成完整的游戏初始数据和开局叙事。
+  const prompt = `你是一个企业经营模拟游戏的AI主持人。请根据以下玩家和公司信息，生成完整的游戏初始数据和开局叙事。这是开局第一轮，需要生成所有以下内容。
 
 【玩家信息】
-姓名：${playerInfo.name}
-年龄：${playerInfo.age}
-性别：${playerInfo.gender}
-职位：${playerInfo.title}
-背景：${playerInfo.background}
+姓名：${playerInfo.name || '由你根据背景设定生成'}
+年龄：${playerInfo.age || '由你根据背景设定生成'}
+性别：${playerInfo.gender || '由你根据背景设定生成'}
+职位：${playerInfo.title || '由你根据背景设定生成'}
+背景：${playerInfo.background || '请你自行设定一个合理的玩家背景'}
 
 【公司信息】
-公司名称：${companyInfo.name}
-发展历史：${companyInfo.history}
-公司状态：${companyInfo.status}
-主营业务：${companyInfo.business}
-总部地点：${companyInfo.headquarters}
-开局时间：${startTime}
+公司名称：${companyInfo.name || '由你根据行业和背景设定生成'}
+发展历史：${companyInfo.history || '请你自行设定公司的发展历史'}
+公司状态：${companyInfo.status || '由你根据公司情况设定'}
+主营业务：${companyInfo.business || '请你自行设定公司的主营业务'}
+总部地点：${companyInfo.headquarters || '由你根据公司情况设定'}
+开局时间：${startTime || '请你自行设定一个合理的开局时间，格式为YYYY-MM-DD HH:mm:ss'}
 
-请按以下格式返回内容（使用块标记格式）：
+请按以下格式返回内容：
 
-【叙事正文】
+=== NARRATIVE ===
 请在这里写开局叙事，描述公司当前的状况、面临的机遇和挑战、玩家的处境等，200-300字。
+=== END_NARRATIVE ===
 
-[TIME]
-${startTime}
-[/TIME]
+=== TIME ===
+开局时间，格式为YYYY-MM-DD HH:mm:ss
+=== END_TIME ===
 
-[ADD]
-{
-  "company": {
-    "id": "comp-001",
-    "name": "${companyInfo.name}",
-    "industry": "${companyInfo.business}",
-    "marketValue": 市值(数字，单位元),
-    "revenue": 年收入(数字),
-    "profit": 年利润(数字),
-    "employees": 员工人数(数字),
-    "foundedYear": ${companyInfo.startYear},
-    "rating": 公司评级0-100,
-    "brandValue": 品牌价值(数字),
-    "marketShare": 市场份额百分比(数字0-100),
-    "isListed": 是否上市(true/false),
-    "creditRating": "信用评级如AA",
-    "creditScore": 信用分数0-100,
-    "loanParameter": 贷款资质参数0-100
-  },
-  "playerInfo": {
-    "id": "player-001",
-    "name": "${playerInfo.name}",
-    "title": "${playerInfo.title}",
-    "personalCash": 个人流动资金(数字),
-    "totalAssets": 总资产(数字),
-    "netWorth": 净资产(数字),
-    "personalAssets": [个人资产数组，可包含房产、车辆等],
-    "stockHoldings": [持股列表，初始可为空]
-  },
-  "products": [产品数组，2-5个初始产品],
-  "employees": [员工数组，5-10个核心员工],
-  "finance": {
-    "cash": 现金(数字),
-    "assets": 总资产(数字),
-    "liabilities": 负债(数字),
-    "equity": 所有者权益(数字),
-    "revenue": 营收(数字),
-    "expenses": 支出(数字),
-    "debt": 债务(数字),
-    "investments": 投资(数字)
-  },
-  "strategies": [战略数组，1-3个初始战略],
-  "operations": [运营任务数组，3-5个当前任务],
-  "innovations": [研发项目数组，1-3个研发项目],
-  "news": [新闻数组，2-3条近期新闻],
-  "competitors": [竞争对手数组，2-3个主要对手，包含performanceIndex和marketExpectationIndex字段],
-  "npcs": [NPC数组，3-5个关键人物，每人包含id,name,avatar,role,company,relationship,personality,specialty,systemPrompt,memory,isFirstMeeting,chatHistory],
-  "shareholdings": [股权结构数组]
-}
-[/ADD]
+=== ADD ===
+company.id: comp-001
+company.name: 公司名称
+company.industry: 行业
+company.marketValue: 市值数字单位元
+company.revenue: 年收入数字
+company.profit: 年利润数字
+company.employees: 员工人数数字
+company.foundedYear: 成立年份
+company.rating: 公司评级0-100
+company.brandValue: 品牌价值数字
+company.marketShare: 市场份额百分比0-100
+company.isListed: true或false
+company.creditRating: 信用评级如AA
+company.creditScore: 信用分数0-100
+company.loanParameter: 贷款资质参数0-100
+company.headquarters: 总部地点
 
-请确保数据合理，符合"${companyInfo.status}"阶段的公司规模。
-注意：[ADD]块内必须是严格有效的JSON格式。`;
+playerInfo.id: player-001
+playerInfo.name: 玩家姓名
+playerInfo.title: 玩家职位
+playerInfo.age: 玩家年龄
+playerInfo.gender: 玩家性别
+playerInfo.personalCash: 个人流动资金数字
+playerInfo.totalAssets: 总资产数字
+playerInfo.netWorth: 净资产数字
+playerInfo.personalAssets.0.id: asset-001
+playerInfo.personalAssets.0.name: 资产名称
+playerInfo.personalAssets.0.type: real_estate或vehicle或other
+playerInfo.personalAssets.0.value: 资产价值数字
+playerInfo.personalAssets.0.description: 描述
+playerInfo.stockHoldings: []
+
+products.0.id: prod-001
+products.0.name: 产品名称
+products.0.category: 产品类别
+products.0.developmentProgress: 开发进度0-100
+products.0.marketShare: 市场份额数字
+products.0.revenue: 营收数字
+products.0.status: development或launched或declining
+products.0.description: 产品描述
+products.0.targetMarket: 目标市场
+products.0.price: 价格数字
+products.0.unitsSold: 销量数字
+（增加更多产品，2-5个）
+
+employees.0.id: emp-001
+employees.0.name: 员工姓名
+employees.0.avatar: 头像URL
+employees.0.role: 职位
+employees.0.department: 部门
+employees.0.salary: 薪资数字
+employees.0.performance: 绩效0-100
+employees.0.hireDate: 入职日期YYYY-MM-DD
+employees.0.level: junior或senior或manager或executive
+（增加更多员工，5-10个）
+
+finance.cash: 现金数字
+finance.assets: 总资产数字
+finance.liabilities: 负债数字
+finance.equity: 所有者权益数字
+finance.revenue: 营收数字
+finance.expenses: 支出数字
+finance.debt: 债务数字
+finance.investments: 投资数字
+
+strategies.0.id: strat-001
+strategies.0.name: 战略名称
+strategies.0.type: market-expansion或product-diversification或cost-optimization或innovation-leadership或acquisition
+strategies.0.status: planning或in-progress或completed
+strategies.0.progress: 进度0-100
+strategies.0.budget: 预算数字
+strategies.0.spent: 已花费数字
+strategies.0.startDate: 开始日期
+strategies.0.endDate: 结束日期
+strategies.0.objectives.0: 目标1
+strategies.0.description: 战略描述
+（增加更多战略，1-3个）
+
+operations.0.id: op-001
+operations.0.title: 任务标题
+operations.0.description: 任务描述
+operations.0.priority: low或medium或high或critical
+operations.0.status: pending或in-progress或completed
+operations.0.assignee: 负责人
+operations.0.dueDate: 截止日期
+operations.0.progress: 进度0-100
+（增加更多运营任务，3-5个）
+
+innovations.0.id: innov-001
+innovations.0.name: 项目名称
+innovations.0.category: 类别
+innovations.0.progress: 进度0-100
+innovations.0.budget: 预算数字
+innovations.0.spent: 已花费数字
+innovations.0.team.0: 团队成员1
+innovations.0.deadline: 截止日期
+innovations.0.impact: 影响0-100
+innovations.0.progressDescription: 进展描述
+innovations.0.bottleneck: 瓶颈
+（增加更多研发项目，1-3个）
+
+news.0.id: news-001
+news.0.title: 新闻标题
+news.0.source: 来源
+news.0.date: 日期
+news.0.impact: positive或negative或neutral
+news.0.summary: 新闻摘要
+（增加更多新闻，2-3条）
+
+competitors.0.id: comp-001
+competitors.0.name: 竞争对手名称
+competitors.0.marketShare: 市场份额数字
+competitors.0.revenue: 营收数字
+competitors.0.products: 产品数量数字
+competitors.0.employees: 员工人数数字
+competitors.0.strength: 优势
+competitors.0.weakness: 劣势
+competitors.0.performanceIndex: 绩效指数0-100
+competitors.0.marketExpectationIndex: 市场预期指数0-100
+（增加更多竞争对手，2-3个）
+
+npcs.0.id: npc-001
+npcs.0.name: NPC姓名
+npcs.0.avatar: 头像URL
+npcs.0.role: 职位
+npcs.0.company: 公司
+npcs.0.relationship: 关系值0-100
+npcs.0.personality: 性格
+npcs.0.specialty: 专长
+npcs.0.systemPrompt: 人格设定
+npcs.0.memory.0: 记忆1
+npcs.0.isFirstMeeting: true
+npcs.0.chatHistory: []
+（增加更多NPC，3-5个）
+
+shareholdings.0.id: share-001
+shareholdings.0.name: 股东名称
+shareholdings.0.type: founder或institution或public或employee或other
+shareholdings.0.shares: 股份数数字
+shareholdings.0.percentage: 持股比例数字
+shareholdings.0.votingPower: 投票权数字
+shareholdings.0.description: 描述
+（增加更多股东）
+=== END_ADD ===
+
+请确保数据合理，符合${companyInfo.status}阶段的公司规模。
+重要规则：
+1. 使用路径键值对格式，每行一个字段
+2. 用点号.表示层级关系，例如 company.name
+3. 用数字索引表示数组，例如 products.0.name
+4. 字符串不需要引号
+5. 数字直接写，不要加单位文字
+6. 布尔值用true或false
+7. 所有数据模块都必须填写完整，不要遗漏
+8. 数组项从0开始编号，连续编号不要跳号`;
 
   try {
     const result = await callProModel(prompt);
@@ -650,75 +914,28 @@ ${startTime}
     let newTime = startTime;
     let addData: Record<string, any> = {};
 
-    const cleanResult = result.replace(/```json\s*/gi, '').replace(/```\s*$/g, '').trim();
-
-    const narrativePatterns = [
-      /【叙事正文】\s*\n([\s\S]*?)(?=\n\[|\n*$)/i,
-      /【叙事正文】\s*([\s\S]*?)(?=\[|\s*$)/i,
-      /叙事正文[：:]\s*\n([\s\S]*?)(?=\n\[|\n*$)/i,
-    ];
-
-    for (const pattern of narrativePatterns) {
-      const match = cleanResult.match(pattern);
-      if (match && match[1].trim().length > 20) {
-        narrative = match[1].trim();
-        break;
+    const narrativeBlock = extractBlock(result, 'NARRATIVE');
+    if (narrativeBlock && narrativeBlock.length > 20) {
+      narrative = narrativeBlock;
+    } else {
+      const narrativeAlt = result.match(/【叙事正文】\s*\n([\s\S]*?)(?=\n===|\n\[|$)/i);
+      if (narrativeAlt && narrativeAlt[1].trim().length > 20) {
+        narrative = narrativeAlt[1].trim();
       }
     }
 
-    if (narrative === '游戏开始，请输入您的决策指令。') {
-      const firstBlockIdx = cleanResult.search(/\[(TIME|ADD|MODIFY|DELETE|SUMMARY)\]/i);
-      if (firstBlockIdx > 20) {
-        const beforeBlocks = cleanResult.substring(0, firstBlockIdx).trim();
-        if (beforeBlocks.length > 20) {
-          narrative = beforeBlocks.replace(/^【叙事正文】\s*\n?/i, '').trim();
-        }
-      }
+    const timeBlock = extractBlock(result, 'TIME');
+    if (timeBlock) {
+      newTime = timeBlock;
     }
 
-    const timeMatch = cleanResult.match(/\[TIME\]\s*([\s\S]*?)\s*\[\/TIME\]/i);
-    if (timeMatch && timeMatch[1].trim()) {
-      newTime = timeMatch[1].trim();
-    }
-
-    const addMatch = cleanResult.match(/\[ADD\]\s*([\s\S]*?)\s*\[\/ADD\]/i);
-    if (addMatch) {
-      const addContent = addMatch[1].trim();
+    const addBlock = extractBlock(result, 'ADD');
+    if (addBlock) {
       try {
-        addData = JSON.parse(addContent);
+        addData = parsePKV(addBlock);
+        console.log('PKV解析结果:', Object.keys(addData));
       } catch (e) {
-        console.error('解析ADD块失败，尝试提取JSON:', e);
-        const jsonMatch = addContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try {
-            addData = JSON.parse(jsonMatch[0]);
-          } catch (e2) {
-            console.error('二次解析ADD块也失败，尝试修复JSON:', e2);
-            try {
-              const fixedJson = addContent
-                .replace(/,\s*([}\]])/g, '$1')
-                .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')
-                .replace(/'([^']*)'/g, '"$1"');
-              addData = JSON.parse(fixedJson);
-              console.log('修复后解析成功');
-            } catch (e3) {
-              console.error('三次解析ADD块也失败:', e3);
-            }
-          }
-        }
-      }
-    }
-
-    if (Object.keys(addData).length === 0) {
-      console.warn('未找到ADD块，尝试从整个返回中提取JSON');
-      const fullJsonMatch = cleanResult.match(/\{[\s\S]*"company"[\s\S]*\}/);
-      if (fullJsonMatch) {
-        try {
-          addData = JSON.parse(fullJsonMatch[0]);
-          console.log('从全文提取JSON成功');
-        } catch (e) {
-          console.error('从全文提取JSON也失败:', e);
-        }
+        console.error('PKV解析失败:', e);
       }
     }
 
