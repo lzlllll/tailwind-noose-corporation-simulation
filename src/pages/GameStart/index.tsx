@@ -104,7 +104,6 @@ export default function GameStart() {
     });
 
     setIsImporting(true);
-    setIsStarting(true);
 
     try {
       const defaultPlayer = {
@@ -126,12 +125,12 @@ export default function GameStart() {
         startDay: '01',
       };
 
+      const initData = await generateInitialGameData(defaultPlayer, defaultCompany);
+
       useGameStore.getState().setInitialSetup({
         player: defaultPlayer,
         company: defaultCompany,
       });
-
-      const initData = await generateInitialGameData(defaultPlayer, defaultCompany);
 
       if (initData.company && Object.keys(initData.company).length > 0) {
         useGameStore.getState().setCompany(initData.company as any);
@@ -197,10 +196,11 @@ export default function GameStart() {
 
       useGameStore.getState().setIsDataGenerated(true);
       useGameStore.getState().setGameStarted(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('快速导入失败:', error);
-      alert('导入失败，请检查AI配置或网络连接');
-      setIsStarting(false);
+      const errorMsg = error?.message || '未知错误';
+      alert(`导入失败：${errorMsg}\n请检查AI配置或网络连接`);
+      useGameStore.getState().resetGame();
     } finally {
       setIsImporting(false);
     }
@@ -301,9 +301,11 @@ export default function GameStart() {
 
       useGameStore.getState().setIsDataGenerated(true);
       useGameStore.getState().setGameStarted(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('游戏初始化失败:', error);
-      alert('游戏初始化失败，请检查AI配置或网络连接');
+      const errorMsg = error?.message || '未知错误';
+      alert(`游戏初始化失败：${errorMsg}\n请检查AI配置或网络连接`);
+      useGameStore.getState().resetGame();
       setIsStarting(false);
     }
   };
