@@ -131,8 +131,8 @@ export default function Operations() {
               key={status}
               onClick={() => setSelectedStatus(status)}
               className={`px-4 py-2 rounded-lg text-sm transition-colors ${selectedStatus === status
-                  ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
-                  : 'bg-white/5 text-text-secondary hover:bg-white/10'
+                ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
+                : 'bg-white/5 text-text-secondary hover:bg-white/10'
                 }`}
             >
               {status === 'all' ? '全部' : statusColors[status as keyof typeof statusColors].label}
@@ -143,22 +143,24 @@ export default function Operations() {
 
       <div className="space-y-4">
         {filteredTasks.map((task) => {
-          const PriorityIcon = priorityColors[task.priority].icon;
+          const PriorityIcon = priorityColors[task.priority]?.icon || AlertCircle;
+          const taskPriority = priorityColors[task.priority] || { bg: 'bg-white/10', text: 'text-white', label: task.priority };
+          const taskStatus = statusColors[task.status] || { bg: 'bg-white/10', text: 'text-white', label: task.status };
           return (
             <Card key={task.id} className="p-6">
               <div className="flex flex-col md:flex-row md:items-start gap-4">
                 <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${priorityColors[task.priority].bg}`}>
-                    <PriorityIcon className={priorityColors[task.priority].text} size={24} />
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${taskPriority.bg}`}>
+                    <PriorityIcon className={taskPriority.text} size={24} />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-white">{task.title}</h3>
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${priorityColors[task.priority].bg} ${priorityColors[task.priority].text}`}>
-                        {priorityColors[task.priority].label}
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${taskPriority.bg} ${taskPriority.text}`}>
+                        {taskPriority.label}
                       </span>
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColors[task.status].bg} ${statusColors[task.status].text}`}>
-                        {statusColors[task.status].label}
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${taskStatus.bg} ${taskStatus.text}`}>
+                        {taskStatus.label}
                       </span>
                     </div>
                     <p className="text-text-secondary text-sm">{task.description}</p>
@@ -300,8 +302,8 @@ export default function Operations() {
             <div className="flex items-center justify-between">
               <span className="text-text-secondary text-sm">合同状态</span>
               <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.contractStatus === 'active' ? 'bg-accent-green/20 text-accent-green' :
-                  item.contractStatus === 'negotiating' ? 'bg-accent-blue/20 text-accent-blue' :
-                    'bg-status-danger/20 text-status-danger'
+                item.contractStatus === 'negotiating' ? 'bg-accent-blue/20 text-accent-blue' :
+                  'bg-status-danger/20 text-status-danger'
                 }`}>
                 {item.contractStatus === 'active' ? '生效中' : item.contractStatus === 'negotiating' ? '谈判中' : '已过期'}
               </span>
@@ -367,8 +369,8 @@ export default function Operations() {
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${isActive
-                  ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
-                  : 'text-text-secondary hover:text-white hover:bg-white/5'
+                ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
+                : 'text-text-secondary hover:text-white hover:bg-white/5'
                 }`}
             >
               <Icon size={18} />

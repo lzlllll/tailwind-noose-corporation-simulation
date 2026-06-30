@@ -249,8 +249,8 @@ export default function Organization() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-white font-medium">{employee.name}</h3>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${levelColors[employee.level].bg} ${levelColors[employee.level].text}`}>
-                      {levelColors[employee.level].label}
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${levelColors[employee.level]?.bg || 'bg-white/10'} ${levelColors[employee.level]?.text || 'text-white'}`}>
+                      {levelColors[employee.level]?.label || employee.level}
                     </span>
                   </div>
                   <p className="text-text-secondary text-sm">{employee.role} · {employee.department}</p>

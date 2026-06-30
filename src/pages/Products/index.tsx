@@ -80,8 +80,8 @@ export default function Products() {
                   <p className="text-text-secondary text-sm">{product.category}</p>
                 </div>
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[product.status].bg} ${statusColors[product.status].text}`}>
-                {statusColors[product.status].label}
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[product.status]?.bg || 'bg-white/10'} ${statusColors[product.status]?.text || 'text-white'}`}>
+                {statusColors[product.status]?.label || product.status}
               </span>
             </div>
 

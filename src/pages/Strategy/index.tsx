@@ -79,7 +79,7 @@ export default function Strategy() {
 
         <div className="space-y-4">
           {strategies.map((strategy) => {
-            const status = statusMap[strategy.status];
+            const status = statusMap[strategy.status] || { label: strategy.status, color: 'text-white', bgColor: 'bg-white/10' };
             return (
               <div key={strategy.id} className="bg-white/5 rounded-xl p-6 hover:bg-white/10 transition-colors">
                 <div className="flex items-start justify-between mb-4">
