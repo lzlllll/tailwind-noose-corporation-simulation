@@ -2,15 +2,7 @@ import { Lightbulb, Calendar, Users, TrendingUp, Plus, Rocket, Target, Award, Al
 import Card from '@/components/Card';
 import StatCard from '@/components/StatCard';
 import { useGameStore } from '@/stores/gameStore';
-
-function formatCurrency(value: number): string {
-  if (value >= 100000000) {
-    return (value / 100000000).toFixed(2) + '亿';
-  } else if (value >= 10000) {
-    return (value / 10000).toFixed(0) + '万';
-  }
-  return value.toFixed(0);
-}
+import { formatCurrency } from '@/lib/utils';
 
 const categoryColors = {
   '前沿技术': { bg: 'bg-accent-purple/20', text: 'text-accent-purple' },
@@ -166,17 +158,17 @@ export default function Innovation() {
                 {milestones.map((milestone, index) => (
                   <div key={milestone.id} className="relative pl-10">
                     <div className={`absolute left-2 w-5 h-5 rounded-full border-2 ${milestone.status === 'completed'
-                        ? 'bg-accent-green border-accent-green'
-                        : milestone.status === 'in-progress'
-                          ? 'bg-accent-blue border-accent-blue'
-                          : 'bg-white/10 border-white/20'
+                      ? 'bg-accent-green border-accent-green'
+                      : milestone.status === 'in-progress'
+                        ? 'bg-accent-blue border-accent-blue'
+                        : 'bg-white/10 border-white/20'
                       }`} />
                     <div className="p-3 bg-white/5 rounded-lg">
                       <p className={`font-medium ${milestone.status === 'completed'
-                          ? 'text-accent-green'
-                          : milestone.status === 'in-progress'
-                            ? 'text-accent-blue'
-                            : 'text-text-secondary'
+                        ? 'text-accent-green'
+                        : milestone.status === 'in-progress'
+                          ? 'text-accent-blue'
+                          : 'text-text-secondary'
                         }`}>
                         {milestone.title}
                       </p>
@@ -212,8 +204,8 @@ export default function Innovation() {
                 <div key={patent.name} className="flex items-center justify-between p-2">
                   <span className="text-text-secondary text-sm">{patent.name}</span>
                   <span className={`text-xs px-2 py-0.5 rounded ${patent.status === 'approved'
-                      ? 'bg-accent-green/20 text-accent-green'
-                      : 'bg-text-muted/20 text-text-muted'
+                    ? 'bg-accent-green/20 text-accent-green'
+                    : 'bg-text-muted/20 text-text-muted'
                     }`}>
                     {patent.status === 'approved' ? '已授权' : '审核中'}
                   </span>

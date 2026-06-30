@@ -2,15 +2,7 @@ import { useState } from 'react';
 import { Package, TrendingUp, Target, Clock, Plus, Search, Filter, Eye, BarChart2, ShoppingCart, Warehouse } from 'lucide-react';
 import Card from '@/components/Card';
 import { useGameStore } from '@/stores/gameStore';
-
-function formatCurrency(value: number): string {
-  if (value >= 100000000) {
-    return (value / 100000000).toFixed(2) + '亿';
-  } else if (value >= 10000) {
-    return (value / 10000).toFixed(0) + '万';
-  }
-  return value.toFixed(0);
-}
+import { formatCurrency, safeToFixed } from '@/lib/utils';
 
 const statusColors = {
   development: { bg: 'bg-accent-blue/20', text: 'text-accent-blue', label: '开发中' },
@@ -36,7 +28,7 @@ export default function Products() {
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.category.toLowerCase().includes(searchTerm.toLowerCase());
+      product.category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || product.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });
@@ -125,9 +117,9 @@ export default function Products() {
                 <span className="text-white text-sm">{product.developmentProgress}%</span>
               </div>
               <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
-                  style={{ width: `${product.developmentProgress}%` }} 
+                <div
+                  className="progress-fill"
+                  style={{ width: `${product.developmentProgress}%` }}
                 />
               </div>
             </div>
@@ -226,9 +218,9 @@ export default function Products() {
                 <span className="text-white">{market.ourShare}%</span>
               </div>
               <div className="progress-bar">
-                <div 
+                <div
                   className="h-full bg-accent-gold rounded-full"
-                  style={{ width: `${market.ourShare}%` }} 
+                  style={{ width: `${market.ourShare}%` }}
                 />
               </div>
             </div>
@@ -238,9 +230,9 @@ export default function Products() {
                 <span className="text-white">{market.targetShare}%</span>
               </div>
               <div className="progress-bar">
-                <div 
+                <div
                   className="h-full bg-accent-blue rounded-full"
-                  style={{ width: `${market.targetShare}%` }} 
+                  style={{ width: `${market.targetShare}%` }}
                 />
               </div>
             </div>
@@ -256,7 +248,7 @@ export default function Products() {
               <p className="text-text-muted text-xs">竞争度</p>
             </div>
             <div className="bg-white/5 rounded-lg p-3 text-center">
-              <p className="text-accent-blue text-sm">{((market.ourShare / market.targetShare) * 100).toFixed(0)}%</p>
+              <p className="text-accent-blue text-sm">{safeToFixed(market.targetShare > 0 ? ((market.ourShare || 0) / (market.targetShare || 1)) * 100 : 0, 0)}%</p>
               <p className="text-text-muted text-xs">目标完成</p>
             </div>
           </div>
@@ -324,11 +316,10 @@ export default function Products() {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                isActive 
-                  ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30' 
-                  : 'text-text-secondary hover:text-white hover:bg-white/5'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${isActive
+                ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
+                : 'text-text-secondary hover:text-white hover:bg-white/5'
+                }`}
             >
               <Icon size={18} />
               <span className="font-medium">{tab.label}</span>

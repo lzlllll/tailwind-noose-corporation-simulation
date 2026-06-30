@@ -1,11 +1,11 @@
-import { 
-  LayoutDashboard, 
-  Package, 
-  Activity, 
-  Users, 
-  DollarSign, 
-  Lightbulb, 
-  Globe, 
+import {
+  LayoutDashboard,
+  Package,
+  Activity,
+  Users,
+  DollarSign,
+  Lightbulb,
+  Globe,
   Users2,
   Compass,
   TrendingUp,
@@ -13,6 +13,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
+import { formatCurrency } from '@/lib/utils';
 
 const navItems = [
   { id: '/', label: '集团概览', icon: LayoutDashboard },
@@ -30,15 +31,6 @@ const navItems = [
 export default function Sidebar() {
   const { currentPage, setCurrentPage, playerInfo, setPersonalPanelOpen } = useGameStore();
 
-  const formatCash = (value: number) => {
-    if (value >= 100000000) {
-      return `${(value / 100000000).toFixed(2)}亿`;
-    } else if (value >= 10000) {
-      return `${(value / 10000).toFixed(2)}万`;
-    }
-    return value.toLocaleString();
-  };
-
   return (
     <aside className="w-64 bg-secondary/80 backdrop-blur-lg border-r border-white/10 flex flex-col h-screen sticky top-0">
       <div className="p-6 border-b border-white/10">
@@ -52,7 +44,7 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-      
+
       <nav className="flex-1 p-4">
         <ul className="space-y-1">
           {navItems.map((item) => {
@@ -72,7 +64,7 @@ export default function Sidebar() {
           })}
         </ul>
       </nav>
-      
+
       <div className="p-4 border-t border-white/10">
         <button
           onClick={() => setPersonalPanelOpen(true)}
@@ -98,7 +90,7 @@ export default function Sidebar() {
           <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
             <span className="text-xs text-text-secondary">流动资金</span>
             <span className="text-sm font-semibold text-accent-gold">
-              {playerInfo ? formatCash(playerInfo.personalCash) : '0'}
+              {playerInfo ? formatCurrency(playerInfo.personalCash) : '0'}
             </span>
           </div>
         </button>

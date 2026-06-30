@@ -5,6 +5,7 @@ import Card from '@/components/Card';
 import { useGameStore } from '@/stores/gameStore';
 import { calculateStockPrices, generateShareholdingData, calculateLoanEligibility, calculateInfluenceIndex } from '@/services/calculationService';
 import { StockHolding } from '@/data/mockData';
+import { formatCurrency, safeToFixed, formatPercent } from '@/lib/utils';
 
 type TabType = 'stocks' | 'shareholding' | 'credit';
 
@@ -146,15 +147,6 @@ export default function CapitalMarket() {
     closeTradeModal();
   };
 
-  const formatCurrency = (value: number): string => {
-    if (value >= 100000000) {
-      return (value / 100000000).toFixed(2) + '亿';
-    } else if (value >= 10000) {
-      return (value / 10000).toFixed(0) + '万';
-    }
-    return value.toFixed(0);
-  };
-
   const creditRatingInfo: Record<string, { color: string; description: string }> = {
     'AAA': { color: 'text-accent-gold', description: '信用极好，贷款资质最优' },
     'AA+': { color: 'text-accent-gold', description: '信用很好，贷款资质优秀' },
@@ -172,7 +164,7 @@ export default function CapitalMarket() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">资本市场</h1>
         <p className="text-text-secondary">
-          {isDataGenerated 
+          {isDataGenerated
             ? '追踪股票市场动态，管理股权结构和信用评级'
             : '等待AI生成企业数据'
           }
@@ -186,11 +178,10 @@ export default function CapitalMarket() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                activeTab === tab.id
-                  ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
-                  : 'bg-white/5 text-text-secondary hover:bg-white/10 border border-transparent'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${activeTab === tab.id
+                ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
+                : 'bg-white/5 text-text-secondary hover:bg-white/10 border border-transparent'
+                }`}
             >
               <Icon size={18} />
               {tab.label}
@@ -212,7 +203,7 @@ export default function CapitalMarket() {
                 <div className="p-4 bg-white/5 rounded-lg">
                   <p className="text-text-muted text-sm mb-1">当前股价</p>
                   <p className="text-accent-green text-xl font-bold">
-                    ¥{company.stockPrice ? company.stockPrice.toFixed(2) : '--'}
+                    ¥{company.stockPrice ? safeToFixed(company.stockPrice, 2) : '--'}
                   </p>
                 </div>
                 <div className="p-4 bg-white/5 rounded-lg">
@@ -262,24 +253,23 @@ export default function CapitalMarket() {
                           <td className="py-3 text-white">{stock.companyName}</td>
                           <td className="py-3 text-text-secondary">{stock.stockExchange}</td>
                           <td className="py-3 text-right text-white font-medium">
-                            ¥{stock.currentPrice.toFixed(2)}
+                            ¥{safeToFixed(stock.currentPrice, 2)}
                           </td>
-                          <td className={`py-3 text-right font-medium ${
-                            stock.changePercent >= 0 ? 'text-status-success' : 'text-status-danger'
-                          }`}>
+                          <td className={`py-3 text-right font-medium ${(stock.changePercent || 0) >= 0 ? 'text-status-success' : 'text-status-danger'
+                            }`}>
                             <div className="flex items-center justify-end gap-1">
-                              {stock.changePercent >= 0 
-                                ? <TrendingUp size={14} /> 
+                              {(stock.changePercent || 0) >= 0
+                                ? <TrendingUp size={14} />
                                 : <TrendingDown size={14} />
                               }
-                              {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                              {(stock.changePercent || 0) >= 0 ? '+' : ''}{safeToFixed(stock.changePercent, 2)}%
                             </div>
                           </td>
                           <td className="py-3 text-right text-text-secondary">
                             {formatCurrency(stock.marketCap)}
                           </td>
                           <td className="py-3 text-right text-text-secondary">
-                            {stock.peRatio.toFixed(2)}
+                            {safeToFixed(stock.peRatio, 2)}
                           </td>
                           <td className="py-3 text-center">
                             <div className="flex items-center justify-center gap-2">
@@ -320,7 +310,7 @@ export default function CapitalMarket() {
                         <span className="text-accent-green font-medium">{stock.performanceIndex}</span>
                       </div>
                       <div className="w-full h-1.5 bg-white/10 rounded-full mt-1">
-                        <div 
+                        <div
                           className="h-full bg-accent-green rounded-full"
                           style={{ width: `${stock.performanceIndex}%` }}
                         />
@@ -330,7 +320,7 @@ export default function CapitalMarket() {
                         <span className="text-accent-gold font-medium">{stock.marketExpectationIndex}</span>
                       </div>
                       <div className="w-full h-1.5 bg-white/10 rounded-full mt-1">
-                        <div 
+                        <div
                           className="h-full bg-accent-gold rounded-full"
                           style={{ width: `${stock.marketExpectationIndex}%` }}
                         />
@@ -349,21 +339,21 @@ export default function CapitalMarket() {
                         <span className="text-text-muted text-xs">{stock.stockCode}</span>
                       </div>
                       <div className="flex items-center justify-between text-xs text-text-muted mb-1">
-                        <span>¥{stock.low52w.toFixed(2)}</span>
-                        <span>¥{stock.high52w.toFixed(2)}</span>
+                        <span>¥{safeToFixed(stock.low52w, 2)}</span>
+                        <span>¥{safeToFixed(stock.high52w, 2)}</span>
                       </div>
                       <div className="relative w-full h-2 bg-white/10 rounded-full">
-                        <div 
+                        <div
                           className="absolute h-full bg-accent-gold/50 rounded-full"
-                          style={{ 
-                            left: `${((stock.currentPrice - stock.low52w) / (stock.high52w - stock.low52w)) * 100}%`,
+                          style={{
+                            left: `${stock.high52w && stock.low52w && stock.high52w !== stock.low52w ? (((stock.currentPrice || 0) - (stock.low52w || 0)) / ((stock.high52w || 0) - (stock.low52w || 0))) * 100 : 0}%`,
                             width: '4px',
                             transform: 'translateX(-50%)'
                           }}
                         />
                       </div>
                       <p className="text-center text-white text-sm mt-2">
-                        当前: ¥{stock.currentPrice.toFixed(2)}
+                        当前: ¥{safeToFixed(stock.currentPrice, 2)}
                       </p>
                     </div>
                   ))}
@@ -401,12 +391,12 @@ export default function CapitalMarket() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number) => `${value}%`}
                       contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                       itemStyle={{ color: '#f8fafc' }}
                     />
-                    <Legend 
+                    <Legend
                       verticalAlign="bottom"
                       formatter={(value) => <span className="text-text-secondary">{value}</span>}
                     />
@@ -430,7 +420,7 @@ export default function CapitalMarket() {
                       <span className="text-accent-gold font-bold">{sh.value}%</span>
                     </div>
                     <div className="w-full h-2 bg-white/10 rounded-full mb-2">
-                      <div 
+                      <div
                         className="h-full rounded-full transition-all"
                         style={{ width: `${sh.value}%`, backgroundColor: sh.color }}
                       />
@@ -497,7 +487,7 @@ export default function CapitalMarket() {
               <p className="text-text-muted text-sm mb-2">信用评分</p>
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-3 bg-white/10 rounded-full">
-                  <div 
+                  <div
                     className="h-full bg-gradient-to-r from-status-danger via-status-warning to-accent-gold rounded-full"
                     style={{ width: `${company?.creditScore || 0}%` }}
                   />
@@ -520,7 +510,7 @@ export default function CapitalMarket() {
           <div className="relative w-[400px] bg-secondary/95 backdrop-blur-lg border border-white/10 rounded-xl shadow-2xl">
             <div className="flex items-center justify-between p-4 border-b border-white/10">
               <div className="flex items-center gap-3">
-                {tradeModal.tradeType === 'buy' 
+                {tradeModal.tradeType === 'buy'
                   ? <ShoppingCart className="w-5 h-5 text-accent-green" />
                   : <DollarSign className="w-5 h-5 text-red-400" />
                 }
@@ -541,7 +531,7 @@ export default function CapitalMarket() {
                 </div>
                 <div className="p-3 bg-white/5 rounded-lg">
                   <p className="text-text-muted text-xs">当前价格</p>
-                  <p className="text-white font-medium">¥{tradeModal.currentPrice.toFixed(2)}</p>
+                  <p className="text-white font-medium">¥{safeToFixed(tradeModal.currentPrice, 2)}</p>
                 </div>
               </div>
 
@@ -571,7 +561,7 @@ export default function CapitalMarket() {
                   value={tradeModal.shares}
                   onChange={(e) => setTradeModal(prev => ({ ...prev, shares: parseInt(e.target.value) || 0 }))}
                   min={0}
-                  max={tradeModal.tradeType === 'sell' 
+                  max={tradeModal.tradeType === 'sell'
                     ? playerInfo?.stockHoldings.find(h => h.stockId === tradeModal.stockId)?.shares || 0
                     : Math.floor((playerInfo?.personalCash || 0) / tradeModal.currentPrice)
                   }
@@ -598,11 +588,10 @@ export default function CapitalMarket() {
                 <button
                   onClick={tradeModal.tradeType === 'buy' ? handleBuy : handleSell}
                   disabled={tradeModal.shares <= 0 || !playerInfo}
-                  className={`flex-1 px-4 py-2 rounded-lg font-medium disabled:opacity-50 ${
-                    tradeModal.tradeType === 'buy'
-                      ? 'bg-accent-green text-primary hover:bg-accent-green/80'
-                      : 'bg-red-500 text-white hover:bg-red-500/80'
-                  }`}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium disabled:opacity-50 ${tradeModal.tradeType === 'buy'
+                    ? 'bg-accent-green text-primary hover:bg-accent-green/80'
+                    : 'bg-red-500 text-white hover:bg-red-500/80'
+                    }`}
                 >
                   确认{tradeModal.tradeType === 'buy' ? '买入' : '卖出'}
                 </button>

@@ -3,15 +3,7 @@ import { Globe, TrendingUp, TrendingDown, Minus, Newspaper, Users, AlertCircle, 
 import Card from '@/components/Card';
 import StatCard from '@/components/StatCard';
 import { useGameStore } from '@/stores/gameStore';
-
-function formatCurrency(value: number): string {
-  if (value >= 100000000) {
-    return (value / 100000000).toFixed(2) + '亿';
-  } else if (value >= 10000) {
-    return (value / 10000).toFixed(0) + '万';
-  }
-  return value.toFixed(0);
-}
+import { formatCurrency, safeToFixed } from '@/lib/utils';
 
 const impactColors = {
   positive: { bg: 'bg-accent-green/20', text: 'text-accent-green', icon: TrendingUp, label: '利好' },
@@ -23,11 +15,11 @@ export default function External() {
   const [selectedNews, setSelectedNews] = useState<string | null>(null);
   const { news, competitors } = useGameStore();
 
-  const totalMarketSize = competitors.length > 0 
+  const totalMarketSize = competitors.length > 0
     ? Math.round(competitors.reduce((sum, c) => sum + (c.revenue || 0), 0) / (competitors.reduce((sum, c) => sum + (c.marketShare || 0), 0) / 100 || 1))
     : 0;
   const avgMarketShare = competitors.length > 0
-    ? (competitors.reduce((sum, c) => sum + (c.marketShare || 0), 0) / competitors.length).toFixed(1)
+    ? safeToFixed(competitors.reduce((sum, c) => sum + (c.marketShare || 0), 0) / competitors.length, 1)
     : '0';
 
   const marketStats = {
@@ -45,33 +37,33 @@ export default function External() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard 
-          title="市场规模" 
-          value={formatCurrency(marketStats.totalMarketSize)} 
+        <StatCard
+          title="市场规模"
+          value={formatCurrency(marketStats.totalMarketSize)}
           unit="元"
           change={marketStats.growthRate}
           icon={<Globe className="text-accent-gold" size={24} />}
           color="gold"
         />
-        <StatCard 
-          title="增长率" 
-          value={marketStats.growthRate} 
+        <StatCard
+          title="增长率"
+          value={marketStats.growthRate}
           unit="%"
           change={3.2}
           icon={<TrendingUp className="text-accent-green" size={24} />}
           color="green"
         />
-        <StatCard 
-          title="竞争对手" 
-          value={marketStats.competitors} 
+        <StatCard
+          title="竞争对手"
+          value={marketStats.competitors}
           unit="家"
           change={0}
           icon={<Users className="text-accent-blue" size={24} />}
           color="blue"
         />
-        <StatCard 
-          title="平均份额" 
-          value={marketStats.avgMarketShare} 
+        <StatCard
+          title="平均份额"
+          value={marketStats.avgMarketShare}
           unit="%"
           change={-1.5}
           icon={<AlertCircle className="text-accent-purple" size={24} />}
@@ -87,12 +79,11 @@ export default function External() {
                 const impact = item.impact as 'positive' | 'negative' | 'neutral';
                 const ImpactIcon = impactColors[impact]?.icon || Minus;
                 return (
-                  <div 
+                  <div
                     key={item.id}
                     onClick={() => setSelectedNews(selectedNews === item.id ? null : item.id)}
-                    className={`p-4 rounded-lg cursor-pointer transition-colors ${
-                      selectedNews === item.id ? 'bg-white/10' : 'bg-white/5 hover:bg-white/10'
-                    }`}
+                    className={`p-4 rounded-lg cursor-pointer transition-colors ${selectedNews === item.id ? 'bg-white/10' : 'bg-white/5 hover:bg-white/10'
+                      }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3">
@@ -137,7 +128,7 @@ export default function External() {
                     <span className="text-accent-blue text-sm">{competitor.marketShare}%</span>
                   </div>
                   <div className="progress-bar mb-3">
-                    <div 
+                    <div
                       className="h-full bg-accent-blue rounded-full"
                       style={{ width: `${competitor.marketShare}%` }}
                     />
@@ -183,20 +174,18 @@ export default function External() {
                 <div key={policy.name} className="flex items-center justify-between p-2">
                   <span className="text-text-secondary text-sm">{policy.name}</span>
                   <div className="flex items-center gap-2">
-                    <span className={`text-xs px-2 py-0.5 rounded ${
-                      policy.status === 'active' 
-                        ? 'bg-accent-green/20 text-accent-green' 
+                    <span className={`text-xs px-2 py-0.5 rounded ${policy.status === 'active'
+                        ? 'bg-accent-green/20 text-accent-green'
                         : 'bg-status-warning/20 text-status-warning'
-                    }`}>
+                      }`}>
                       {policy.status === 'active' ? '生效中' : '草案'}
                     </span>
-                    <span className={`text-xs px-2 py-0.5 rounded ${
-                      policy.impact === 'high' 
-                        ? 'bg-status-danger/20 text-status-danger' 
+                    <span className={`text-xs px-2 py-0.5 rounded ${policy.impact === 'high'
+                        ? 'bg-status-danger/20 text-status-danger'
                         : policy.impact === 'medium'
-                        ? 'bg-status-warning/20 text-status-warning'
-                        : 'bg-accent-green/20 text-accent-green'
-                    }`}>
+                          ? 'bg-status-warning/20 text-status-warning'
+                          : 'bg-accent-green/20 text-accent-green'
+                      }`}>
                       {policy.impact === 'high' ? '高影响' : policy.impact === 'medium' ? '中影响' : '低影响'}
                     </span>
                   </div>

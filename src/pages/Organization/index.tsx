@@ -2,15 +2,7 @@ import { useState } from 'react';
 import { Users, Building2, Briefcase, Award, Search, Plus, ChevronRight, Building, Globe } from 'lucide-react';
 import Card from '@/components/Card';
 import { useGameStore } from '@/stores/gameStore';
-
-function formatCurrency(value: number): string {
-  if (value >= 100000000) {
-    return (value / 100000000).toFixed(2) + '亿';
-  } else if (value >= 10000) {
-    return (value / 10000).toFixed(0) + '万';
-  }
-  return value.toFixed(0);
-}
+import { formatCurrency } from '@/lib/utils';
 
 const levelColors = {
   executive: { bg: 'bg-accent-gold/20', text: 'text-accent-gold', label: '高管' },
@@ -374,8 +366,8 @@ export default function Organization() {
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${isActive
-                  ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
-                  : 'text-text-secondary hover:text-white hover:bg-white/5'
+                ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
+                : 'text-text-secondary hover:text-white hover:bg-white/5'
                 }`}
             >
               <Icon size={18} />

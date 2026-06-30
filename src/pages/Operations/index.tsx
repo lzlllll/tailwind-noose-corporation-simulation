@@ -2,13 +2,7 @@ import { useState } from 'react';
 import { Activity, CheckCircle, Clock, AlertCircle, AlertTriangle, User, Calendar, Plus, Search, Factory, Truck, Link2, Building2 } from 'lucide-react';
 import Card from '@/components/Card';
 import { useGameStore } from '@/stores/gameStore';
-
-function formatCurrency(value: number): string {
-  if (value >= 10000) {
-    return (value / 10000).toFixed(0) + '万';
-  }
-  return value.toFixed(0);
-}
+import { formatCurrency } from '@/lib/utils';
 
 const priorityColors = {
   low: { bg: 'bg-text-muted/20', text: 'text-text-muted', label: '低', icon: Clock },
@@ -69,7 +63,7 @@ export default function Operations() {
 
   const filteredTasks = operations.filter((task) => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         task.assignee.toLowerCase().includes(searchTerm.toLowerCase());
+      task.assignee.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || task.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });
@@ -136,11 +130,10 @@ export default function Operations() {
             <button
               key={status}
               onClick={() => setSelectedStatus(status)}
-              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                selectedStatus === status
+              className={`px-4 py-2 rounded-lg text-sm transition-colors ${selectedStatus === status
                   ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
                   : 'bg-white/5 text-text-secondary hover:bg-white/10'
-              }`}
+                }`}
             >
               {status === 'all' ? '全部' : statusColors[status as keyof typeof statusColors].label}
             </button>
@@ -191,9 +184,9 @@ export default function Operations() {
                     <span className="text-white text-sm">{task.progress}%</span>
                   </div>
                   <div className="progress-bar">
-                    <div 
-                      className="progress-fill" 
-                      style={{ width: `${task.progress}%` }} 
+                    <div
+                      className="progress-fill"
+                      style={{ width: `${task.progress}%` }}
                     />
                   </div>
                 </div>
@@ -256,9 +249,9 @@ export default function Operations() {
                 <span className="text-white">{factory.utilization}%</span>
               </div>
               <div className="progress-bar">
-                <div 
+                <div
                   className={`h-full rounded-full ${factory.utilization >= 80 ? 'bg-accent-green' : factory.utilization >= 60 ? 'bg-accent-gold' : 'bg-accent-blue'}`}
-                  style={{ width: `${factory.utilization}%` }} 
+                  style={{ width: `${factory.utilization}%` }}
                 />
               </div>
             </div>
@@ -306,11 +299,10 @@ export default function Operations() {
 
             <div className="flex items-center justify-between">
               <span className="text-text-secondary text-sm">合同状态</span>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                item.contractStatus === 'active' ? 'bg-accent-green/20 text-accent-green' :
-                item.contractStatus === 'negotiating' ? 'bg-accent-blue/20 text-accent-blue' :
-                'bg-status-danger/20 text-status-danger'
-              }`}>
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.contractStatus === 'active' ? 'bg-accent-green/20 text-accent-green' :
+                  item.contractStatus === 'negotiating' ? 'bg-accent-blue/20 text-accent-blue' :
+                    'bg-status-danger/20 text-status-danger'
+                }`}>
                 {item.contractStatus === 'active' ? '生效中' : item.contractStatus === 'negotiating' ? '谈判中' : '已过期'}
               </span>
             </div>
@@ -374,11 +366,10 @@ export default function Operations() {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                isActive 
-                  ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30' 
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${isActive
+                  ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
                   : 'text-text-secondary hover:text-white hover:bg-white/5'
-              }`}
+                }`}
             >
               <Icon size={18} />
               <span className="font-medium">{tab.label}</span>

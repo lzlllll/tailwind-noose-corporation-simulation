@@ -753,7 +753,7 @@ export async function generateInitialGameData(playerInfo: {
   }
 
   const prompt = `你是一个企业经营模拟游戏的AI主持人。请根据以下玩家和公司信息，生成完整的游戏初始数据和开局叙事。这是开局第一轮，需要生成所有以下内容。
-
+请按以下格式返回内容：
 【玩家信息】
 姓名：${playerInfo.name || '由你根据背景设定生成'}
 年龄：${playerInfo.age || '由你根据背景设定生成'}
@@ -769,10 +769,9 @@ export async function generateInitialGameData(playerInfo: {
 总部地点：${companyInfo.headquarters || '由你根据公司情况设定'}
 开局时间：${startTime || '请你自行设定一个合理的开局时间，格式为YYYY-MM-DD HH:mm:ss'}
 
-请按以下格式返回内容：
 
 === NARRATIVE ===
-请在这里写开局叙事，描述公司当前的状况、面临的机遇和挑战、玩家的处境等，200-300字。
+请在这里写开局叙事，描述公司当前的状况、面临的机遇和挑战、玩家的处境等，生动的小说文风。
 === END_NARRATIVE ===
 
 === TIME ===
@@ -983,7 +982,7 @@ markets.0.revenue: 营收数字
 === END_ADD ===
 
 强制要求：
-1. 必须生成以上所有数据模块，一个都不能少
+1. 必须生成以上所有数据模块，一个都不能少，如果玩家没有提及则根据背景生成
 2. 每个模块的所有字段都必须填写，不能留空
 3. 数组类型必须生成多个项目（数量参考括号中的说明）
 4. 数据必须合理，符合公司发展阶段

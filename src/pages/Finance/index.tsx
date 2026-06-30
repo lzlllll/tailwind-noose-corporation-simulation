@@ -3,27 +3,19 @@ import { DollarSign, TrendingUp, TrendingDown, Wallet, PieChart, ArrowUpRight, A
 import Card from '@/components/Card';
 import StatCard from '@/components/StatCard';
 import { useGameStore } from '@/stores/gameStore';
-
-function formatCurrency(value: number): string {
-  if (value >= 100000000) {
-    return (value / 100000000).toFixed(2) + '亿';
-  } else if (value >= 10000) {
-    return (value / 10000).toFixed(0) + '万';
-  }
-  return value.toFixed(0);
-}
+import { formatCurrency, formatPercent } from '@/lib/utils';
 
 function SimpleBarChart({ data, labels, color = '#ffd700' }: { data: number[]; labels: string[]; color?: string }) {
   const max = Math.max(...data);
-  
+
   return (
     <div className="flex items-end justify-between h-32 gap-4">
       {data.map((value, index) => (
         <div key={index} className="flex-1 flex flex-col items-center gap-2">
-          <div 
+          <div
             className="w-full rounded-t-lg transition-all duration-500"
-            style={{ 
-              height: `${(value / max) * 100}%`, 
+            style={{
+              height: `${(value / max) * 100}%`,
               backgroundColor: color,
               minHeight: '20px'
             }}
@@ -86,33 +78,33 @@ export default function Finance() {
   const renderOverview = () => (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard 
-          title="现金余额" 
-          value={formatCurrency(finance.cash)} 
+        <StatCard
+          title="现金余额"
+          value={formatCurrency(finance.cash)}
           unit="元"
           change={8.5}
           icon={<Wallet className="text-accent-gold" size={24} />}
           color="gold"
         />
-        <StatCard 
-          title="总资产" 
-          value={formatCurrency(finance.assets)} 
+        <StatCard
+          title="总资产"
+          value={formatCurrency(finance.assets)}
           unit="元"
           change={12.3}
           icon={<TrendingUp className="text-accent-green" size={24} />}
           color="green"
         />
-        <StatCard 
-          title="总负债" 
-          value={formatCurrency(finance.liabilities)} 
+        <StatCard
+          title="总负债"
+          value={formatCurrency(finance.liabilities)}
           unit="元"
           change={-3.2}
           icon={<ArrowDownRight className="text-accent-blue" size={24} />}
           color="blue"
         />
-        <StatCard 
-          title="净资产" 
-          value={formatCurrency(finance.equity)} 
+        <StatCard
+          title="净资产"
+          value={formatCurrency(finance.equity)}
           unit="元"
           change={18.5}
           icon={<PieChart className="text-accent-purple" size={24} />}
@@ -175,7 +167,7 @@ export default function Finance() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card title="季度利润趋势">
-          <SimpleBarChart 
+          <SimpleBarChart
             data={financeHistory.map(h => h.profit)}
             labels={financeHistory.map(h => h.quarter)}
             color="#00ff88"
@@ -197,7 +189,7 @@ export default function Finance() {
                       <span className="text-accent-blue text-xs">{formatCurrency(item.revenue)}</span>
                     </div>
                     <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full bg-accent-blue rounded-full"
                         style={{ width: `${(item.revenue / 2500000000) * 100}%` }}
                       />
@@ -209,7 +201,7 @@ export default function Finance() {
                       <span className="text-status-warning text-xs">{formatCurrency(item.expenses)}</span>
                     </div>
                     <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full bg-status-warning rounded-full"
                         style={{ width: `${(item.expenses / 2500000000) * 100}%` }}
                       />
@@ -356,7 +348,7 @@ export default function Finance() {
           </div>
           <div className="bg-white/5 rounded-lg p-4">
             <p className="text-text-secondary text-sm mb-2">利润率</p>
-            <p className="text-xl font-bold text-accent-gold">{((totalIncome - totalExpense) / totalIncome * 100).toFixed(1)}%</p>
+            <p className="text-xl font-bold text-accent-gold">{formatPercent(totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome * 100) : 0, 1)}</p>
           </div>
         </div>
       </Card>
@@ -378,11 +370,10 @@ export default function Finance() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                  isActive 
-                    ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30' 
-                    : 'text-text-secondary hover:text-white hover:bg-white/5'
-                }`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${isActive
+                  ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
+                  : 'text-text-secondary hover:text-white hover:bg-white/5'
+                  }`}
               >
                 <Icon size={18} />
                 <span className="font-medium">{tab.label}</span>

@@ -4,15 +4,7 @@ import StatCard from '@/components/StatCard';
 import ChartPanel from '@/components/ChartPanel';
 import LineChartPanel from '@/components/LineChartPanel';
 import { useGameStore } from '@/stores/gameStore';
-
-function formatCurrency(value: number): string {
-  if (value >= 100000000) {
-    return (value / 100000000).toFixed(2) + '亿';
-  } else if (value >= 10000) {
-    return (value / 10000).toFixed(0) + '万';
-  }
-  return value.toFixed(0);
-}
+import { formatCurrency } from '@/lib/utils';
 
 function CircularProgress({ value, size = 120, strokeWidth = 8 }: { value: number; size?: number; strokeWidth?: number }) {
   const radius = (size - strokeWidth) / 2;
@@ -70,7 +62,7 @@ export default function Overview() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">集团概览</h1>
         <p className="text-text-secondary">
-          {isDataGenerated 
+          {isDataGenerated
             ? `当前时间：${formatGameTime(gameTime)}`
             : '等待AI生成企业数据，请在右侧输入您的决策开始游戏'
           }
@@ -80,33 +72,33 @@ export default function Overview() {
       {isDataGenerated ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatCard 
-              title="市值" 
-              value={company ? formatCurrency(company.marketValue) : '--'} 
+            <StatCard
+              title="市值"
+              value={company ? formatCurrency(company.marketValue) : '--'}
               unit="元"
               change={12.5}
               icon={<Building2 className="text-accent-gold" size={24} />}
               color="gold"
             />
-            <StatCard 
-              title="营收" 
-              value={finance ? formatCurrency(finance.revenue) : '--'} 
+            <StatCard
+              title="营收"
+              value={finance ? formatCurrency(finance.revenue) : '--'}
               unit="元"
               change={finance?.revenueGrowth || 0}
               icon={<TrendingUp className="text-accent-green" size={24} />}
               color="green"
             />
-            <StatCard 
-              title="利润" 
-              value={finance ? formatCurrency(finance.profit) : '--'} 
+            <StatCard
+              title="利润"
+              value={finance ? formatCurrency(finance.profit) : '--'}
               unit="元"
               change={finance?.profitMargin || 0}
               icon={<Award className="text-accent-blue" size={24} />}
               color="blue"
             />
-            <StatCard 
-              title="员工数" 
-              value={employees.length > 0 ? employees.length.toString() : '--'} 
+            <StatCard
+              title="员工数"
+              value={employees.length > 0 ? employees.length.toString() : '--'}
               unit="人"
               change={5.8}
               icon={<Users className="text-accent-purple" size={24} />}
@@ -153,7 +145,7 @@ export default function Overview() {
                   <p className="text-text-muted">等待AI生成产品数据</p>
                 </div>
               )}
-              <button 
+              <button
                 onClick={() => setCurrentPage('/products')}
                 className="w-full py-3 text-accent-gold hover:bg-accent-gold/10 rounded-lg transition-colors flex items-center justify-center gap-2"
               >
@@ -173,7 +165,7 @@ export default function Overview() {
                       <p className="text-text-secondary">{company.industry}</p>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-3 bg-white/5 rounded-lg">
                       <p className="text-text-muted text-xs">成立年份</p>

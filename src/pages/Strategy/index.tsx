@@ -1,5 +1,6 @@
 import { useGameStore } from '@/stores/gameStore';
 import { Target, TrendingUp, CheckCircle2, Clock, User, BarChart3 } from 'lucide-react';
+import { safeToFixed, formatPercent } from '@/lib/utils';
 
 const strategyTypeMap: Record<string, string> = {
   'market-expansion': '市场扩张',
@@ -59,7 +60,7 @@ export default function Strategy() {
             </div>
             <div>
               <p className="text-text-secondary text-sm">预算执行率</p>
-              <p className="text-2xl font-bold text-white">{((totalSpent / totalBudget) * 100).toFixed(1)}%</p>
+              <p className="text-2xl font-bold text-white">{formatPercent(totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0, 1)}</p>
             </div>
           </div>
         </div>
@@ -96,8 +97,8 @@ export default function Strategy() {
                   </div>
                   <div className="text-right">
                     <p className="text-text-secondary text-sm">预算</p>
-                    <p className="text-lg font-semibold text-accent-gold">{(strategy.budget / 100000000).toFixed(1)}亿</p>
-                    <p className="text-xs text-text-secondary">已花费 {(strategy.spent / 100000000).toFixed(1)}亿</p>
+                    <p className="text-lg font-semibold text-accent-gold">{safeToFixed((strategy.budget || 0) / 100000000, 1)}亿</p>
+                    <p className="text-xs text-text-secondary">已花费 {safeToFixed((strategy.spent || 0) / 100000000, 1)}亿</p>
                   </div>
                 </div>
 
@@ -157,7 +158,7 @@ export default function Strategy() {
                           <span className="text-xs text-text-secondary">/ {metric.target}</span>
                         </div>
                         <div className="progress-bar mt-2">
-                          <div 
+                          <div
                             className="h-full bg-gradient-to-r from-accent-green to-accent-blue rounded-full"
                             style={{ width: `${Math.min((metric.current / metric.target) * 100, 100)}%` }}
                           />

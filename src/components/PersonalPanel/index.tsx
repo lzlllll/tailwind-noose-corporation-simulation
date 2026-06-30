@@ -1,5 +1,6 @@
 import { X, Wallet, Building, TrendingUp, Home, Car, PiggyBank, Briefcase } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
+import { formatCurrency, safeToFixed } from '@/lib/utils';
 
 const assetTypeIcons = {
   real_estate: Home,
@@ -22,18 +23,9 @@ export default function PersonalPanel() {
 
   if (!personalPanelOpen || !playerInfo) return null;
 
-  const formatCurrency = (value: number) => {
-    if (value >= 100000000) {
-      return `${(value / 100000000).toFixed(2)}亿`;
-    } else if (value >= 10000) {
-      return `${(value / 10000).toFixed(2)}万`;
-    }
-    return value.toLocaleString();
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-end">
-      <div 
+      <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={() => setPersonalPanelOpen(false)}
       />
@@ -127,11 +119,11 @@ export default function PersonalPanel() {
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-text-secondary">
-                          {holding.shares}股 · 成本 {holding.averagePrice.toFixed(2)}
+                          {holding.shares}股 · 成本 {safeToFixed(holding.averagePrice, 2)}
                         </span>
                         <span className={profitColor}>
-                          {holding.profitLoss >= 0 ? '+' : ''}{formatCurrency(holding.profitLoss)} 
-                          ({holding.profitLossPercent >= 0 ? '+' : ''}{holding.profitLossPercent.toFixed(2)}%)
+                          {holding.profitLoss >= 0 ? '+' : ''}{formatCurrency(holding.profitLoss)}
+                          ({(holding.profitLossPercent || 0) >= 0 ? '+' : ''}{safeToFixed(holding.profitLossPercent, 2)}%)
                         </span>
                       </div>
                     </div>
