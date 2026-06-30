@@ -241,8 +241,8 @@ export default function GameStart() {
               <button
                 onClick={() => setCurrentStep(step.id)}
                 className={`px-3 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${currentStep === step.id
-                    ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
-                    : 'bg-white/5 text-text-secondary hover:bg-white/10'
+                  ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
+                  : 'bg-white/5 text-text-secondary hover:bg-white/10'
                   }`}
               >
                 <step.icon className="w-4 h-4" />
@@ -348,8 +348,8 @@ export default function GameStart() {
                       key={g.value}
                       onClick={() => handlePlayerChange('gender', g.value)}
                       className={`px-4 py-2 rounded-lg transition-all ${playerData.gender === g.value
-                          ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
-                          : 'bg-white/5 text-text-secondary hover:bg-white/10 border border-transparent'
+                        ? 'bg-accent-gold/20 text-accent-gold border border-accent-gold/30'
+                        : 'bg-white/5 text-text-secondary hover:bg-white/10 border border-transparent'
                         }`}
                     >
                       {g.label}
@@ -548,7 +548,20 @@ export default function GameStart() {
                     }}
                     className="px-3 py-1.5 text-sm bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors"
                   >
-                    DeepSeek
+                    DeepSeek V4
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAiForm(prev => ({
+                        ...prev,
+                        apiBaseUrl: 'https://api.deepseek.com/v1',
+                        flashModel: 'deepseek-r1-flash',
+                        proModel: 'deepseek-r1',
+                      }));
+                    }}
+                    className="px-3 py-1.5 text-sm bg-white/5 text-text-secondary rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    DeepSeek R1
                   </button>
                   <button
                     onClick={() => {

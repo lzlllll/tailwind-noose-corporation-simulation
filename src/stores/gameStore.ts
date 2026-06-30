@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { 
   Company, 
   Product, 
@@ -141,7 +142,9 @@ interface GameStore {
   loadGame: (saveData: string) => boolean;
 }
 
-export const useGameStore = create<GameStore>((set) => ({
+export const useGameStore = create<GameStore>()(
+  persist(
+    (set): GameStore => ({
   currentPage: '/',
   company: null,
   products: [],
@@ -444,4 +447,46 @@ export const useGameStore = create<GameStore>((set) => ({
       return false;
     }
   },
-}));
+    }),
+    {
+      name: 'game-store',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        aiSettings: state.aiSettings,
+        timeSettings: state.timeSettings,
+        gameStarted: state.gameStarted,
+        company: state.company,
+        products: state.products,
+        employees: state.employees,
+        finance: state.finance,
+        financeHistory: state.financeHistory,
+        npcs: state.npcs,
+        operations: state.operations,
+        innovations: state.innovations,
+        news: state.news,
+        competitors: state.competitors,
+        suppliers: state.suppliers,
+        shareholdings: state.shareholdings,
+        departmentsData: state.departmentsData,
+        businessLines: state.businessLines,
+        markets: state.markets,
+        inventory: state.inventory,
+        factories: state.factories,
+        supplyChain: state.supplyChain,
+        logistics: state.logistics,
+        subsidiaries: state.subsidiaries,
+        cashFlow: state.cashFlow,
+        strategies: state.strategies,
+        chatMessages: state.chatMessages,
+        npcChatSummaries: state.npcChatSummaries,
+        narrativeText: state.narrativeText,
+        gameTime: state.gameTime,
+        previousGameTime: state.previousGameTime,
+        isDataGenerated: state.isDataGenerated,
+        playerInfo: state.playerInfo,
+        contextSummary: state.contextSummary,
+        currentPage: state.currentPage,
+      }),
+    }
+  )
+);

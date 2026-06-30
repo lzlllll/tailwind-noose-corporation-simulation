@@ -24,8 +24,8 @@ const modelPresets: ModelPreset[] = [
     id: 'deepseek',
     name: 'DeepSeek V4',
     apiBaseUrl: 'https://api.deepseek.com/v1',
-    flashModel: 'deepseek-v4-pro',
-    proModel: 'deepseek-v4-flash',
+    flashModel: 'deepseek-v4-flash',
+    proModel: 'deepseek-v4-pro',
     description: '国产高性能模型',
   },
   {
@@ -100,8 +100,8 @@ export default function Modal() {
               key={preset.id}
               onClick={() => handlePresetSelect(preset)}
               className={`p-3 rounded-lg border text-left transition-all ${selectedPreset === preset.id
-                  ? 'border-accent-gold bg-accent-gold/10'
-                  : 'border-white/10 bg-white/5 hover:bg-white/10'
+                ? 'border-accent-gold bg-accent-gold/10'
+                : 'border-white/10 bg-white/5 hover:bg-white/10'
                 }`}
             >
               <div className="flex items-center justify-between">
