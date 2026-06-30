@@ -644,22 +644,85 @@ ${startTime}
 
   try {
     const result = await callProModel(prompt);
+    console.log('AI原始返回:', result);
 
-    const narrativeMatch = result.match(/【叙事正文】\s*\n([\s\S]*?)(?=\n\[|\n*$)/);
-    const narrative = narrativeMatch ? narrativeMatch[1].trim() : '游戏开始，请输入您的决策指令。';
-
-    const timeMatch = result.match(/\[TIME\]\s*([\s\S]*?)\s*\[\/TIME\]/);
-    const newTime = timeMatch ? timeMatch[1].trim() : startTime;
-
-    const addMatch = result.match(/\[ADD\]\s*([\s\S]*?)\s*\[\/ADD\]/);
+    let narrative = '游戏开始，请输入您的决策指令。';
+    let newTime = startTime;
     let addData: Record<string, any> = {};
-    if (addMatch) {
-      try {
-        addData = JSON.parse(addMatch[1]);
-      } catch (e) {
-        console.error('解析ADD块失败:', e);
+
+    const cleanResult = result.replace(/```json\s*/gi, '').replace(/```\s*$/g, '').trim();
+
+    const narrativePatterns = [
+      /【叙事正文】\s*\n([\s\S]*?)(?=\n\[|\n*$)/i,
+      /【叙事正文】\s*([\s\S]*?)(?=\[|\s*$)/i,
+      /叙事正文[：:]\s*\n([\s\S]*?)(?=\n\[|\n*$)/i,
+    ];
+
+    for (const pattern of narrativePatterns) {
+      const match = cleanResult.match(pattern);
+      if (match && match[1].trim().length > 20) {
+        narrative = match[1].trim();
+        break;
       }
     }
+
+    if (narrative === '游戏开始，请输入您的决策指令。') {
+      const firstBlockIdx = cleanResult.search(/\[(TIME|ADD|MODIFY|DELETE|SUMMARY)\]/i);
+      if (firstBlockIdx > 20) {
+        const beforeBlocks = cleanResult.substring(0, firstBlockIdx).trim();
+        if (beforeBlocks.length > 20) {
+          narrative = beforeBlocks.replace(/^【叙事正文】\s*\n?/i, '').trim();
+        }
+      }
+    }
+
+    const timeMatch = cleanResult.match(/\[TIME\]\s*([\s\S]*?)\s*\[\/TIME\]/i);
+    if (timeMatch && timeMatch[1].trim()) {
+      newTime = timeMatch[1].trim();
+    }
+
+    const addMatch = cleanResult.match(/\[ADD\]\s*([\s\S]*?)\s*\[\/ADD\]/i);
+    if (addMatch) {
+      const addContent = addMatch[1].trim();
+      try {
+        addData = JSON.parse(addContent);
+      } catch (e) {
+        console.error('解析ADD块失败，尝试提取JSON:', e);
+        const jsonMatch = addContent.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            addData = JSON.parse(jsonMatch[0]);
+          } catch (e2) {
+            console.error('二次解析ADD块也失败，尝试修复JSON:', e2);
+            try {
+              const fixedJson = addContent
+                .replace(/,\s*([}\]])/g, '$1')
+                .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')
+                .replace(/'([^']*)'/g, '"$1"');
+              addData = JSON.parse(fixedJson);
+              console.log('修复后解析成功');
+            } catch (e3) {
+              console.error('三次解析ADD块也失败:', e3);
+            }
+          }
+        }
+      }
+    }
+
+    if (Object.keys(addData).length === 0) {
+      console.warn('未找到ADD块，尝试从整个返回中提取JSON');
+      const fullJsonMatch = cleanResult.match(/\{[\s\S]*"company"[\s\S]*\}/);
+      if (fullJsonMatch) {
+        try {
+          addData = JSON.parse(fullJsonMatch[0]);
+          console.log('从全文提取JSON成功');
+        } catch (e) {
+          console.error('从全文提取JSON也失败:', e);
+        }
+      }
+    }
+
+    console.log('解析结果 - narrative长度:', narrative.length, 'addData keys:', Object.keys(addData));
 
     return {
       narrative,

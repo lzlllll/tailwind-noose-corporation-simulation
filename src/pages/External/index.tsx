@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Globe, TrendingUp, TrendingDown, Minus, Newspaper, Users, AlertCircle, ChevronRight } from 'lucide-react';
 import Card from '@/components/Card';
 import StatCard from '@/components/StatCard';
-import { externalNewsData, competitorsData, marketTrends } from '@/data/mockData';
+import { useGameStore } from '@/stores/gameStore';
 
 function formatCurrency(value: number): string {
   if (value >= 100000000) {
@@ -21,12 +21,20 @@ const impactColors = {
 
 export default function External() {
   const [selectedNews, setSelectedNews] = useState<string | null>(null);
+  const { news, competitors } = useGameStore();
+
+  const totalMarketSize = competitors.length > 0 
+    ? Math.round(competitors.reduce((sum, c) => sum + (c.revenue || 0), 0) / (competitors.reduce((sum, c) => sum + (c.marketShare || 0), 0) / 100 || 1))
+    : 0;
+  const avgMarketShare = competitors.length > 0
+    ? (competitors.reduce((sum, c) => sum + (c.marketShare || 0), 0) / competitors.length).toFixed(1)
+    : '0';
 
   const marketStats = {
-    totalMarketSize: 68000000000,
+    totalMarketSize,
     growthRate: 18.5,
-    competitors: competitorsData.length,
-    avgMarketShare: competitorsData.reduce((sum, c) => sum + c.marketShare, 0) / competitorsData.length,
+    competitors: competitors.length,
+    avgMarketShare: parseFloat(avgMarketShare),
   };
 
   return (
@@ -75,40 +83,41 @@ export default function External() {
         <div className="lg:col-span-2">
           <Card title="市场动态">
             <div className="space-y-4">
-              {externalNewsData.map((news) => {
-                const ImpactIcon = impactColors[news.impact].icon;
+              {news.map((item) => {
+                const impact = item.impact as 'positive' | 'negative' | 'neutral';
+                const ImpactIcon = impactColors[impact]?.icon || Minus;
                 return (
                   <div 
-                    key={news.id}
-                    onClick={() => setSelectedNews(selectedNews === news.id ? null : news.id)}
+                    key={item.id}
+                    onClick={() => setSelectedNews(selectedNews === item.id ? null : item.id)}
                     className={`p-4 rounded-lg cursor-pointer transition-colors ${
-                      selectedNews === news.id ? 'bg-white/10' : 'bg-white/5 hover:bg-white/10'
+                      selectedNews === item.id ? 'bg-white/10' : 'bg-white/5 hover:bg-white/10'
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${impactColors[news.impact].bg}`}>
-                          <ImpactIcon className={impactColors[news.impact].text} size={20} />
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${impactColors[impact]?.bg || impactColors.neutral.bg}`}>
+                          <ImpactIcon className={impactColors[impact]?.text || impactColors.neutral.text} size={20} />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="text-white font-medium">{news.title}</h3>
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${impactColors[news.impact].bg} ${impactColors[news.impact].text}`}>
-                              {impactColors[news.impact].label}
+                            <h3 className="text-white font-medium">{item.title}</h3>
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${impactColors[impact]?.bg || impactColors.neutral.bg} ${impactColors[impact]?.text || impactColors.neutral.text}`}>
+                              {impactColors[impact]?.label || impactColors.neutral.label}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
                             <Newspaper className="text-text-muted" size={14} />
-                            <span className="text-text-muted text-sm">{news.source}</span>
-                            <span className="text-text-muted text-sm">· {news.date}</span>
+                            <span className="text-text-muted text-sm">{item.source}</span>
+                            <span className="text-text-muted text-sm">· {item.date}</span>
                           </div>
                         </div>
                       </div>
-                      <ChevronRight className={`text-text-muted transition-transform ${selectedNews === news.id ? 'rotate-90' : ''}`} size={20} />
+                      <ChevronRight className={`text-text-muted transition-transform ${selectedNews === item.id ? 'rotate-90' : ''}`} size={20} />
                     </div>
-                    {selectedNews === news.id && (
+                    {selectedNews === item.id && (
                       <div className="mt-4 p-4 bg-white/5 rounded-lg animate-fade-in">
-                        <p className="text-text-secondary">{news.summary}</p>
+                        <p className="text-text-secondary">{item.summary}</p>
                       </div>
                     )}
                   </div>
@@ -121,7 +130,7 @@ export default function External() {
         <div className="space-y-6">
           <Card title="竞争对手">
             <div className="space-y-4">
-              {competitorsData.map((competitor) => (
+              {competitors.map((competitor) => (
                 <div key={competitor.id} className="p-4 bg-white/5 rounded-lg">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-white font-medium">{competitor.name}</h4>
@@ -134,45 +143,32 @@ export default function External() {
                     />
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-text-muted">营收: {formatCurrency(competitor.revenue)}</span>
-                    <span className="text-text-muted">{competitor.employees}人</span>
+                    <span className="text-text-muted">营收: {formatCurrency(competitor.revenue || 0)}</span>
+                    <span className="text-text-muted">{competitor.employees || 0}人</span>
                   </div>
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="text-accent-green text-xs">优势:</span>
-                      <span className="text-text-secondary text-xs">{competitor.strength}</span>
+                      <span className="text-text-secondary text-xs">{competitor.strength || '未知'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-status-danger text-xs">劣势:</span>
-                      <span className="text-text-secondary text-xs">{competitor.weakness}</span>
+                      <span className="text-text-secondary text-xs">{competitor.weakness || '未知'}</span>
                     </div>
                   </div>
                 </div>
               ))}
+              {competitors.length === 0 && (
+                <div className="text-center text-text-muted py-8">暂无竞争对手数据</div>
+              )}
             </div>
           </Card>
 
           <Card title="行业趋势">
             <div className="space-y-4">
-              {marketTrends.map((trend) => (
-                <div key={trend.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-text-secondary text-sm">{trend.name}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${trend.trend === 'up' ? 'bg-accent-green/20 text-accent-green' : 'bg-text-muted/20 text-text-muted'}`}>
-                      {trend.trend === 'up' ? '上升' : '稳定'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-16 progress-bar">
-                      <div 
-                        className="progress-fill"
-                        style={{ width: `${trend.value}%` }}
-                      />
-                    </div>
-                    <span className="text-white text-sm w-6">{trend.value}%</span>
-                  </div>
-                </div>
-              ))}
+              {news.length === 0 && (
+                <div className="text-center text-text-muted py-4">暂无行业趋势数据</div>
+              )}
             </div>
           </Card>
 

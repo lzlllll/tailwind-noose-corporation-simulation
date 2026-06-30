@@ -107,20 +107,20 @@ export default function GameStart() {
 
     try {
       const defaultPlayer = {
-        name: '玩家',
-        age: '30',
+        name: '',
+        age: '',
         gender: '男',
-        title: '董事长',
+        title: '',
         background: quickImportText,
       };
 
       const defaultCompany = {
-        name: '星辰科技',
+        name: '',
         history: quickImportText,
-        status: '初创期',
-        business: '科技/互联网',
-        headquarters: '北京',
-        startYear: '2020',
+        status: '',
+        business: '',
+        headquarters: '',
+        startYear: '2000',
         startMonth: '01',
         startDay: '01',
       };
@@ -390,7 +390,7 @@ export default function GameStart() {
                 <textarea
                   value={quickImportText}
                   onChange={(e) => setQuickImportText(e.target.value)}
-                  placeholder="示例：&#10;张伟，35岁，男，曾是某互联网巨头的技术总监，离职后创办了星辰科技，专注于人工智能领域。公司目前处于初创期，总部位于北京，2020年1月正式成立..."
+                  placeholder="粘贴或输入开局描述，例如：&#10;玩家姓名、年龄、性别、背景经历...&#10;公司名称、行业、发展历程、当前状态...&#10;总部地点、开局时间..."
                   rows={10}
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-text-muted focus:outline-none focus:border-accent-gold/50 resize-none"
                 />
