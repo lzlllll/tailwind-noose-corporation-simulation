@@ -520,3 +520,140 @@ ${description}
     return {};
   }
 }
+
+export interface GameInitData {
+  narrative: string;
+  company: Record<string, unknown>;
+  products: Record<string, unknown>[];
+  finance: Record<string, unknown>;
+  employees: Record<string, unknown>[];
+  strategies: Record<string, unknown>[];
+  operations: Record<string, unknown>[];
+  innovations: Record<string, unknown>[];
+  news: Record<string, unknown>[];
+  competitors: Record<string, unknown>[];
+  npcs: Record<string, unknown>[];
+  shareholdings: Record<string, unknown>[];
+  playerInfo: Record<string, unknown>;
+  newTime: string;
+}
+
+export async function generateInitialGameData(playerInfo: {
+  name: string;
+  age: string;
+  gender: string;
+  title: string;
+  background: string;
+}, companyInfo: {
+  name: string;
+  history: string;
+  status: string;
+  business: string;
+  headquarters: string;
+  startYear: string;
+  startMonth: string;
+  startDay: string;
+}): Promise<GameInitData> {
+  const startTime = `${companyInfo.startYear}-${companyInfo.startMonth.padStart(2, '0')}-${companyInfo.startDay.padStart(2, '0')} 09:00:00`;
+
+  const prompt = `你是一个企业经营模拟游戏的AI主持人。请根据以下玩家和公司信息，生成完整的游戏初始数据和开局叙事。
+
+【玩家信息】
+姓名：${playerInfo.name}
+年龄：${playerInfo.age}
+性别：${playerInfo.gender}
+职位：${playerInfo.title}
+背景：${playerInfo.background}
+
+【公司信息】
+公司名称：${companyInfo.name}
+发展历史：${companyInfo.history}
+公司状态：${companyInfo.status}
+主营业务：${companyInfo.business}
+总部地点：${companyInfo.headquarters}
+开局时间：${startTime}
+
+请生成以下完整的初始数据，并以严格的JSON格式返回（只返回JSON，不要其他文字）：
+{
+  "narrative": "开局叙事正文，描述公司当前的状况、面临的机遇和挑战、玩家的处境等，200-300字",
+  "newTime": "${startTime}",
+  "company": {
+    "id": "comp-001",
+    "name": "${companyInfo.name}",
+    "industry": "${companyInfo.business}",
+    "marketValue": 市值(数字，单位元),
+    "revenue": 年收入(数字),
+    "profit": 年利润(数字),
+    "employees": 员工人数(数字),
+    "foundedYear": ${companyInfo.startYear},
+    "rating": 公司评级0-100,
+    "brandValue": 品牌价值(数字),
+    "marketShare": 市场份额百分比(数字0-100),
+    "isListed": 是否上市(true/false),
+    "creditRating": "信用评级如AA",
+    "creditScore": 信用分数0-100,
+    "loanParameter": 贷款资质参数0-100
+  },
+  "playerInfo": {
+    "id": "player-001",
+    "name": "${playerInfo.name}",
+    "title": "${playerInfo.title}",
+    "personalCash": 个人流动资金(数字),
+    "totalAssets": 总资产(数字),
+    "netWorth": 净资产(数字),
+    "personalAssets": [个人资产数组，可包含房产、车辆等],
+    "stockHoldings": [持股列表，初始可为空]
+  },
+  "products": [产品数组，2-5个初始产品],
+  "employees": [员工数组，5-10个核心员工],
+  "finance": {
+    "cash": 现金(数字),
+    "assets": 总资产(数字),
+    "liabilities": 负债(数字),
+    "equity": 所有者权益(数字),
+    "revenue": 营收(数字),
+    "expenses": 支出(数字),
+    "debt": 债务(数字),
+    "investments": 投资(数字)
+  },
+  "strategies": [战略数组，1-3个初始战略],
+  "operations": [运营任务数组，3-5个当前任务],
+  "innovations": [研发项目数组，1-3个研发项目],
+  "news": [新闻数组，2-3条近期新闻],
+  "competitors": [竞争对手数组，2-3个主要对手，包含performanceIndex和marketExpectationIndex字段],
+  "npcs": [NPC数组，3-5个关键人物，每人包含id,name,avatar,role,company,relationship,personality,specialty,systemPrompt,memory,isFirstMeeting,chatHistory],
+  "shareholdings": [股权结构数组]
+}
+
+请确保数据合理，符合"${companyInfo.status}"阶段的公司规模。`;
+
+  try {
+    const result = await callProModel(prompt);
+
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return parsed as GameInitData;
+    }
+
+    return {
+      narrative: '游戏开始，请输入您的决策指令。',
+      newTime: startTime,
+      company: {},
+      products: [],
+      finance: {},
+      employees: [],
+      strategies: [],
+      operations: [],
+      innovations: [],
+      news: [],
+      competitors: [],
+      npcs: [],
+      shareholdings: [],
+      playerInfo: {},
+    };
+  } catch (error) {
+    console.error('生成游戏初始数据失败:', error);
+    throw error;
+  }
+}

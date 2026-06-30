@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Settings, Loader2, User, Bot, FileText, Clock, Save, Upload, Plus } from 'lucide-react';
+import { Send, Settings, Loader2, User, Bot, FileText, Clock, Save, Upload, Plus, RefreshCw } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
-import { generateNarrative, DataOperation } from '@/services/aiService';
-import { ExternalNews, Competitor, OperationTask, InnovationProject } from '@/data/mockData';
+import { generateNarrative, generateInitialGameData, DataOperation } from '@/services/aiService';
+import { ExternalNews, Competitor, OperationTask, InnovationProject, PlayerInfo } from '@/data/mockData';
 import { checkMonthChange, generateMonthlyCashFlow } from '@/services/calculationService';
 
 function calculateDerivedData(store: ReturnType<typeof useGameStore.getState>) {
@@ -146,6 +146,8 @@ export default function NarrativePanel() {
     setIsDataGenerated,
     contextSummary,
     setContextSummary,
+    isDataGenerated,
+    initialSetup,
   } = useGameStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -202,18 +204,7 @@ export default function NarrativePanel() {
     return assistantMessages.slice(-4).map(m => m.content);
   };
 
-  const handleSend = async () => {
-    if (!inputValue.trim() || isAIProcessing) return;
-
-    const userMessage = {
-      id: Date.now().toString(),
-      role: 'user' as const,
-      content: inputValue.trim(),
-      timestamp: new Date().toLocaleString('zh-CN'),
-    };
-
-    addChatMessage(userMessage);
-    setInputValue('');
+  const generateResponse = async (userContent: string, skipAddUser: boolean = false) => {
     setIsAIProcessing(true);
 
     try {
@@ -248,7 +239,7 @@ export default function NarrativePanel() {
 
       const recentMessages = getRecentMessages();
 
-      const response = await generateNarrative(inputValue.trim(), gameData, {
+      const response = await generateNarrative(userContent, gameData, {
         contextSummary: contextSummary,
         recentMessages: recentMessages,
       });
@@ -296,6 +287,124 @@ export default function NarrativePanel() {
     } finally {
       setIsAIProcessing(false);
     }
+  };
+
+  const handleSend = async () => {
+    if (!inputValue.trim() || isAIProcessing) return;
+
+    const userMessage = {
+      id: Date.now().toString(),
+      role: 'user' as const,
+      content: inputValue.trim(),
+      timestamp: new Date().toLocaleString('zh-CN'),
+    };
+
+    const trimmedInput = inputValue.trim();
+    addChatMessage(userMessage);
+    setInputValue('');
+
+    await generateResponse(trimmedInput);
+  };
+
+  const handleRegenerate = async () => {
+    if (isAIProcessing || chatMessages.length === 0) return;
+
+    const hasUserMessages = chatMessages.some(m => m.role === 'user');
+
+    if (!hasUserMessages && initialSetup.player && initialSetup.company) {
+      setIsAIProcessing(true);
+      useGameStore.getState().setChatMessages([]);
+      setNarrativeText('');
+      setContextSummary('');
+
+      try {
+        const initData = await generateInitialGameData(initialSetup.player, initialSetup.company);
+
+        if (initData.company && Object.keys(initData.company).length > 0) {
+          useGameStore.getState().setCompany(initData.company as any);
+        }
+
+        if (initData.playerInfo && Object.keys(initData.playerInfo).length > 0) {
+          useGameStore.getState().setPlayerInfo(initData.playerInfo as unknown as PlayerInfo);
+        }
+
+        if (initData.products && initData.products.length > 0) {
+          useGameStore.getState().setProducts(initData.products as any);
+        }
+
+        if (initData.employees && initData.employees.length > 0) {
+          useGameStore.getState().setEmployees(initData.employees as any);
+        }
+
+        if (initData.finance && Object.keys(initData.finance).length > 0) {
+          useGameStore.getState().setFinance(initData.finance as any);
+        }
+
+        if (initData.strategies && initData.strategies.length > 0) {
+          useGameStore.getState().setStrategies(initData.strategies as any);
+        }
+
+        if (initData.operations && initData.operations.length > 0) {
+          useGameStore.getState().setOperations(initData.operations as any);
+        }
+
+        if (initData.innovations && initData.innovations.length > 0) {
+          useGameStore.getState().setInnovations(initData.innovations as any);
+        }
+
+        if (initData.news && initData.news.length > 0) {
+          useGameStore.getState().setNews(initData.news as any);
+        }
+
+        if (initData.competitors && initData.competitors.length > 0) {
+          useGameStore.getState().setCompetitors(initData.competitors as any);
+        }
+
+        if (initData.npcs && initData.npcs.length > 0) {
+          useGameStore.getState().setNPCs(initData.npcs as any);
+        }
+
+        if (initData.shareholdings && initData.shareholdings.length > 0) {
+          useGameStore.getState().setShareholdings(initData.shareholdings as any);
+        }
+
+        if (initData.newTime) {
+          useGameStore.getState().setGameTime(initData.newTime);
+        }
+
+        if (initData.narrative) {
+          setNarrativeText(initData.narrative);
+          useGameStore.getState().addChatMessage({
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: initData.narrative,
+            timestamp: new Date().toLocaleString('zh-CN'),
+          });
+        }
+      } catch (error) {
+        console.error('重新生成开局失败:', error);
+        const errorMessage = {
+          id: Date.now().toString(),
+          role: 'assistant' as const,
+          content: '重新生成失败，请稍后重试',
+          timestamp: new Date().toLocaleString('zh-CN'),
+        };
+        addChatMessage(errorMessage);
+      } finally {
+        setIsAIProcessing(false);
+      }
+      return;
+    }
+
+    const lastUserIndex = [...chatMessages].reverse().findIndex(m => m.role === 'user');
+    if (lastUserIndex === -1) return;
+
+    const lastUserMessage = chatMessages[chatMessages.length - 1 - lastUserIndex];
+
+    const newMessages = chatMessages.slice(0, chatMessages.length - 1 - lastUserIndex);
+    useGameStore.getState().setChatMessages(newMessages);
+
+    generateResponse(lastUserMessage.content, true);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -364,7 +473,7 @@ export default function NarrativePanel() {
       </div>
 
       <div className="flex-1 overflow-auto p-4 space-y-4 scrollbar-thin">
-        {chatMessages.length === 0 ? (
+        {chatMessages.length === 0 && !isAIProcessing ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Bot className="text-text-muted mb-4" size={48} />
             <p className="text-text-secondary mb-2">欢迎来到星辰科技集团</p>
@@ -420,6 +529,26 @@ export default function NarrativePanel() {
                 </div>
               </div>
             ))}
+            {isAIProcessing && (
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-accent-gold/20">
+                  <Loader2 className="text-accent-gold animate-spin" size={16} />
+                </div>
+                <div className="max-w-[85%]">
+                  <div className="inline-block p-4 rounded-xl bg-accent-gold/10 border border-accent-gold/20 rounded-tl-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-accent-gold font-semibold">AI模拟中</span>
+                      <span className="flex gap-1">
+                        <span className="w-1.5 h-1.5 bg-accent-gold rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-1.5 h-1.5 bg-accent-gold rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-1.5 h-1.5 bg-accent-gold rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-muted mt-2">正在推演剧情，请稍候...</p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         )}
@@ -451,18 +580,29 @@ export default function NarrativePanel() {
               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-text-muted focus:outline-none focus:border-accent-gold/50 transition-colors resize-none h-20 disabled:opacity-50"
             />
           </div>
-          <button
-            onClick={handleSend}
-            disabled={!inputValue.trim() || !hasApiKey || isAIProcessing}
-            className="px-4 py-3 bg-accent-gold/20 text-accent-gold rounded-xl hover:bg-accent-gold/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {isAIProcessing ? (
-              <Loader2 className="animate-spin" size={20} />
-            ) : (
-              <Send size={20} />
-            )}
-            <span className="hidden sm:inline">{isAIProcessing ? '推演中...' : '发送'}</span>
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={handleSend}
+              disabled={!inputValue.trim() || !hasApiKey || isAIProcessing}
+              className="px-4 py-3 bg-accent-gold/20 text-accent-gold rounded-xl hover:bg-accent-gold/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isAIProcessing ? (
+                <Loader2 className="animate-spin" size={20} />
+              ) : (
+                <Send size={20} />
+              )}
+              <span className="hidden sm:inline">{isAIProcessing ? '推演中...' : '发送'}</span>
+            </button>
+            <button
+              onClick={handleRegenerate}
+              disabled={isAIProcessing || chatMessages.length === 0 || (!initialSetup.player && !chatMessages.some(m => m.role === 'user'))}
+              title="重新生成上一条回复"
+              className="px-4 py-2 bg-white/5 text-text-secondary rounded-xl hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <RefreshCw size={18} />
+              <span className="hidden sm:inline">重新生成</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

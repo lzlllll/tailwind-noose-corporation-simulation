@@ -4,7 +4,8 @@ import {
   FileText, Wand2, Loader2
 } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
-import { generateInitialData } from '@/services/aiService';
+import { generateInitialData, generateInitialGameData } from '@/services/aiService';
+import { PlayerInfo } from '@/data/mockData';
 
 interface PlayerFormData {
   name: string;
@@ -69,6 +70,7 @@ export default function GameStart() {
   const [quickImportText, setQuickImportText] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [isStarting, setIsStarting] = useState(false);
 
   const handlePlayerChange = (field: keyof PlayerFormData, value: string) => {
     setPlayerData(prev => ({ ...prev, [field]: value }));
@@ -146,6 +148,10 @@ export default function GameStart() {
       alert('请输入公司名称');
       return;
     }
+    if (!aiForm.apiKey.trim()) {
+      alert('请先配置AI服务API密钥');
+      return;
+    }
 
     setAISettings({
       apiKey: aiForm.apiKey,
@@ -154,49 +160,85 @@ export default function GameStart() {
       apiBaseUrl: aiForm.apiBaseUrl,
     });
 
-    const gameTimeString = `${companyData.startYear}-${companyData.startMonth.padStart(2, '0')}-${companyData.startDay.padStart(2, '0')} 09:00:00`;
-
-    setPlayerInfo({
-      id: `player-${Date.now()}`,
-      name: playerData.name,
-      title: playerData.title || '董事长',
-      personalCash: 10000000,
-      totalAssets: 50000000,
-      netWorth: 50000000,
-      personalAssets: [],
-      stockHoldings: [],
+    useGameStore.getState().setInitialSetup({
+      player: playerData,
+      company: companyData,
     });
 
-    setCompany({
-      id: `comp-${Date.now()}`,
-      name: companyData.name,
-      industry: companyData.business || '综合',
-      marketValue: 50000000,
-      revenue: 0,
-      profit: 0,
-      employees: 10,
-      foundedYear: parseInt(companyData.startYear) || 2000,
-      rating: 60,
-      brandValue: 1000000,
-      marketShare: 0.1,
-      isListed: false,
-      creditRating: 'A',
-      creditScore: 70,
-      loanParameter: 50,
-    });
+    setIsStarting(true);
 
-    setProducts([]);
-    setEmployees([]);
-    setFinance(null);
-    setNPCs([]);
-    setNews([]);
-    setCompetitors([]);
-    setSuppliers([]);
-    setShareholdings([]);
-    setStrategies([]);
+    try {
+      const initData = await generateInitialGameData(playerData, companyData);
 
-    setGameTime(gameTimeString);
-    setGameStarted(true);
+      if (initData.company && Object.keys(initData.company).length > 0) {
+        useGameStore.getState().setCompany(initData.company as any);
+      }
+
+      if (initData.playerInfo && Object.keys(initData.playerInfo).length > 0) {
+        useGameStore.getState().setPlayerInfo(initData.playerInfo as unknown as PlayerInfo);
+      }
+
+      if (initData.products && initData.products.length > 0) {
+        useGameStore.getState().setProducts(initData.products as any);
+      }
+
+      if (initData.employees && initData.employees.length > 0) {
+        useGameStore.getState().setEmployees(initData.employees as any);
+      }
+
+      if (initData.finance && Object.keys(initData.finance).length > 0) {
+        useGameStore.getState().setFinance(initData.finance as any);
+      }
+
+      if (initData.strategies && initData.strategies.length > 0) {
+        useGameStore.getState().setStrategies(initData.strategies as any);
+      }
+
+      if (initData.operations && initData.operations.length > 0) {
+        useGameStore.getState().setOperations(initData.operations as any);
+      }
+
+      if (initData.innovations && initData.innovations.length > 0) {
+        useGameStore.getState().setInnovations(initData.innovations as any);
+      }
+
+      if (initData.news && initData.news.length > 0) {
+        useGameStore.getState().setNews(initData.news as any);
+      }
+
+      if (initData.competitors && initData.competitors.length > 0) {
+        useGameStore.getState().setCompetitors(initData.competitors as any);
+      }
+
+      if (initData.npcs && initData.npcs.length > 0) {
+        useGameStore.getState().setNPCs(initData.npcs as any);
+      }
+
+      if (initData.shareholdings && initData.shareholdings.length > 0) {
+        useGameStore.getState().setShareholdings(initData.shareholdings as any);
+      }
+
+      if (initData.newTime) {
+        useGameStore.getState().setGameTime(initData.newTime);
+      }
+
+      if (initData.narrative) {
+        useGameStore.getState().setNarrativeText(initData.narrative);
+        useGameStore.getState().addChatMessage({
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: initData.narrative,
+          timestamp: new Date().toLocaleString('zh-CN'),
+        });
+      }
+
+      useGameStore.getState().setIsDataGenerated(true);
+      useGameStore.getState().setGameStarted(true);
+    } catch (error) {
+      console.error('游戏初始化失败:', error);
+      alert('游戏初始化失败，请检查AI配置或网络连接');
+      setIsStarting(false);
+    }
   };
 
   const genders = [
@@ -698,9 +740,17 @@ export default function GameStart() {
                 </button>
                 <button
                   onClick={handleStartGame}
-                  className="px-8 py-3 bg-accent-gold text-primary font-bold rounded-lg hover:bg-accent-gold/80 transition-colors"
+                  disabled={isStarting}
+                  className="px-8 py-3 bg-accent-gold text-primary font-bold rounded-lg hover:bg-accent-gold/80 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  开始游戏
+                  {isStarting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      AI生成数据中...
+                    </>
+                  ) : (
+                    '开始游戏'
+                  )}
                 </button>
               </div>
             </div>

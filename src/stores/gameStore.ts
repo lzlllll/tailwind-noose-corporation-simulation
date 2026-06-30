@@ -87,6 +87,10 @@ interface GameStore {
   personalPanelOpen: boolean;
   gameStarted: boolean;
   contextSummary: string;
+  initialSetup: {
+    player: { name: string; age: string; gender: string; title: string; background: string } | null;
+    company: { name: string; history: string; status: string; business: string; headquarters: string; startYear: string; startMonth: string; startDay: string } | null;
+  };
 
   setCurrentPage: (page: string) => void;
   setCompany: (company: Company) => void;
@@ -137,6 +141,7 @@ interface GameStore {
   setPersonalPanelOpen: (open: boolean) => void;
   setGameStarted: (started: boolean) => void;
   setContextSummary: (summary: string) => void;
+  setInitialSetup: (setup: { player: any; company: any }) => void;
   resetGame: () => void;
   saveGame: () => string;
   loadGame: (saveData: string) => boolean;
@@ -193,6 +198,10 @@ export const useGameStore = create<GameStore>()(
   personalPanelOpen: false,
   gameStarted: false,
   contextSummary: '',
+  initialSetup: {
+    player: null,
+    company: null,
+  },
 
   setCurrentPage: (page) => set({ currentPage: page }),
   setCompany: (company) => set({ company }),
@@ -310,6 +319,7 @@ export const useGameStore = create<GameStore>()(
   setPersonalPanelOpen: (personalPanelOpen) => set({ personalPanelOpen }),
   setGameStarted: (gameStarted) => set({ gameStarted }),
   setContextSummary: (contextSummary) => set({ contextSummary }),
+  setInitialSetup: (initialSetup) => set({ initialSetup }),
   resetGame: () => set({
     currentPage: '/',
     company: null,
@@ -486,6 +496,7 @@ export const useGameStore = create<GameStore>()(
         playerInfo: state.playerInfo,
         contextSummary: state.contextSummary,
         currentPage: state.currentPage,
+        initialSetup: state.initialSetup,
       }),
     }
   )
