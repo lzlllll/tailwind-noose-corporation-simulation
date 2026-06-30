@@ -180,6 +180,18 @@ export default function GameStart() {
         useGameStore.getState().setShareholdings(initData.shareholdings as any);
       }
 
+      if (initData.suppliers && initData.suppliers.length > 0) {
+        useGameStore.getState().setSuppliers(initData.suppliers as any);
+      }
+
+      if (initData.businessLines && initData.businessLines.length > 0) {
+        useGameStore.getState().setBusinessLines(initData.businessLines as any);
+      }
+
+      if (initData.markets && initData.markets.length > 0) {
+        useGameStore.getState().setMarkets(initData.markets as any);
+      }
+
       if (initData.newTime) {
         useGameStore.getState().setGameTime(initData.newTime);
       }
@@ -283,6 +295,18 @@ export default function GameStart() {
 
       if (initData.shareholdings && initData.shareholdings.length > 0) {
         useGameStore.getState().setShareholdings(initData.shareholdings as any);
+      }
+
+      if (initData.suppliers && initData.suppliers.length > 0) {
+        useGameStore.getState().setSuppliers(initData.suppliers as any);
+      }
+
+      if (initData.businessLines && initData.businessLines.length > 0) {
+        useGameStore.getState().setBusinessLines(initData.businessLines as any);
+      }
+
+      if (initData.markets && initData.markets.length > 0) {
+        useGameStore.getState().setMarkets(initData.markets as any);
       }
 
       if (initData.newTime) {

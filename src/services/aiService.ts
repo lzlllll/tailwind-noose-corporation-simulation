@@ -234,67 +234,94 @@ function extractRelevantData(modules: string[], gameData: Record<string, unknown
   return relevantData;
 }
 
+function tryParseBlockContent(content: string): Record<string, any> {
+  let result: Record<string, any> = {};
+
+  try {
+    result = parsePKV(content);
+    if (Object.keys(result).length > 0) {
+      return result;
+    }
+  } catch (e) {
+    console.warn('PKV解析失败，尝试JSON:', e);
+  }
+
+  try {
+    const trimmed = content.trim();
+    if (trimmed.startsWith('{')) {
+      result = JSON.parse(trimmed);
+      return result;
+    }
+  } catch (e) {
+    console.warn('JSON解析失败，尝试修复:', e);
+  }
+
+  try {
+    const trimmed = content.trim();
+    if (trimmed.startsWith('{')) {
+      const fixedJson = trimmed
+        .replace(/,\s*([}\]])/g, '$1')
+        .replace(/(['"])?([a-zA-Z0-9_\u4e00-\u9fa5]+)(['"])?\s*:/g, '"$2":')
+        .replace(/'([^']*)'/g, '"$1"');
+      result = JSON.parse(fixedJson);
+      return result;
+    }
+  } catch (e) {
+    console.error('修复后JSON解析也失败:', e);
+  }
+
+  return result;
+}
+
 function parseDataOperations(response: string, validModules: string[]): DataOperation[] {
   const operations: DataOperation[] = [];
 
   const modifyBlock = extractBlock(response, 'MODIFY');
   if (modifyBlock) {
-    try {
-      const data = parsePKV(modifyBlock);
-      Object.keys(data).forEach((target) => {
-        if (validModules.includes(target)) {
-          operations.push({
-            type: 'modify',
-            target,
-            data: data[target],
-          });
-        } else {
-          console.warn(`忽略无效的MODIFY目标模块: ${target}`);
-        }
-      });
-    } catch (e) {
-      console.error('解析MODIFY操作失败:', e);
-    }
+    const data = tryParseBlockContent(modifyBlock);
+    Object.keys(data).forEach((target) => {
+      if (validModules.includes(target)) {
+        operations.push({
+          type: 'modify',
+          target,
+          data: data[target],
+        });
+      } else {
+        console.warn(`忽略无效的MODIFY目标模块: ${target}`);
+      }
+    });
   }
 
   const addBlock = extractBlock(response, 'ADD');
   if (addBlock) {
-    try {
-      const data = parsePKV(addBlock);
-      Object.keys(data).forEach((target) => {
-        if (validModules.includes(target)) {
-          operations.push({
-            type: 'add',
-            target,
-            data: data[target],
-          });
-        } else {
-          console.warn(`忽略无效的ADD目标模块: ${target}`);
-        }
-      });
-    } catch (e) {
-      console.error('解析ADD操作失败:', e);
-    }
+    const data = tryParseBlockContent(addBlock);
+    Object.keys(data).forEach((target) => {
+      if (validModules.includes(target)) {
+        operations.push({
+          type: 'add',
+          target,
+          data: data[target],
+        });
+      } else {
+        console.warn(`忽略无效的ADD目标模块: ${target}`);
+      }
+    });
   }
 
   const deleteBlock = extractBlock(response, 'DELETE');
   if (deleteBlock) {
-    try {
-      const data = parsePKV(deleteBlock);
-      Object.keys(data).forEach((target) => {
-        if (validModules.includes(target)) {
-          operations.push({
-            type: 'delete',
-            target,
-            data: data[target],
-          });
-        } else {
-          console.warn(`忽略无效的DELETE目标模块: ${target}`);
-        }
-      });
-    } catch (e) {
-      console.error('解析DELETE操作失败:', e);
-    }
+    const data = tryParseBlockContent(deleteBlock);
+    Object.keys(data).forEach((target) => {
+      if (validModules.includes(target)) {
+        operations.push({
+          type: 'delete',
+          target,
+          data: data[target],
+        });
+      } else {
+        console.warn(`忽略无效的DELETE目标模块: ${target}`);
+      }
+    });
   }
 
   return operations.sort((a, b) => {
@@ -697,6 +724,9 @@ export interface GameInitData {
   competitors: Record<string, unknown>[];
   npcs: Record<string, unknown>[];
   shareholdings: Record<string, unknown>[];
+  suppliers: Record<string, unknown>[];
+  businessLines: Record<string, unknown>[];
+  markets: Record<string, unknown>[];
   playerInfo: Record<string, unknown>;
   newTime: string;
 }
@@ -753,15 +783,18 @@ export async function generateInitialGameData(playerInfo: {
 company.id: comp-001
 company.name: 公司名称
 company.industry: 行业
-company.marketValue: 市值数字单位元
+company.marketValue: 市值数字
 company.revenue: 年收入数字
 company.profit: 年利润数字
 company.employees: 员工人数数字
-company.foundedYear: 成立年份
+company.foundedYear: 成立年份数字
 company.rating: 公司评级0-100
 company.brandValue: 品牌价值数字
 company.marketShare: 市场份额百分比0-100
 company.isListed: true或false
+company.stockCode: 股票代码
+company.stockPrice: 股价数字
+company.stockExchange: 交易所
 company.creditRating: 信用评级如AA
 company.creditScore: 信用分数0-100
 company.loanParameter: 贷款资质参数0-100
@@ -777,10 +810,20 @@ playerInfo.totalAssets: 总资产数字
 playerInfo.netWorth: 净资产数字
 playerInfo.personalAssets.0.id: asset-001
 playerInfo.personalAssets.0.name: 资产名称
-playerInfo.personalAssets.0.type: real_estate或vehicle或other
+playerInfo.personalAssets.0.type: real_estate或vehicle或investment或savings或other
 playerInfo.personalAssets.0.value: 资产价值数字
 playerInfo.personalAssets.0.description: 描述
+playerInfo.personalAssets.0.acquisitionDate: 获得日期YYYY-MM-DD
 playerInfo.stockHoldings: []
+
+shareholdings.0.id: share-001
+shareholdings.0.name: 股东名称
+shareholdings.0.type: founder或institution或public或employee或other
+shareholdings.0.shares: 股份数数字
+shareholdings.0.percentage: 持股比例数字
+shareholdings.0.votingPower: 投票权数字
+shareholdings.0.description: 描述
+（增加更多股东，3-5个）
 
 products.0.id: prod-001
 products.0.name: 产品名称
@@ -812,6 +855,11 @@ finance.liabilities: 负债数字
 finance.equity: 所有者权益数字
 finance.revenue: 营收数字
 finance.expenses: 支出数字
+finance.profit: 利润数字
+finance.profitMargin: 利润率数字
+finance.revenueGrowth: 营收增长率数字
+finance.expenseGrowth: 支出增长率数字
+finance.cashBalance: 现金结余数字
 finance.debt: 债务数字
 finance.investments: 投资数字
 
@@ -822,9 +870,13 @@ strategies.0.status: planning或in-progress或completed
 strategies.0.progress: 进度0-100
 strategies.0.budget: 预算数字
 strategies.0.spent: 已花费数字
-strategies.0.startDate: 开始日期
-strategies.0.endDate: 结束日期
+strategies.0.startDate: 开始日期YYYY-MM-DD
+strategies.0.endDate: 结束日期YYYY-MM-DD
 strategies.0.objectives.0: 目标1
+strategies.0.keyMetrics.0.name: 指标名称
+strategies.0.keyMetrics.0.target: 目标值数字
+strategies.0.keyMetrics.0.current: 当前值数字
+strategies.0.responsible: 负责人
 strategies.0.description: 战略描述
 （增加更多战略，1-3个）
 
@@ -834,7 +886,7 @@ operations.0.description: 任务描述
 operations.0.priority: low或medium或high或critical
 operations.0.status: pending或in-progress或completed
 operations.0.assignee: 负责人
-operations.0.dueDate: 截止日期
+operations.0.dueDate: 截止日期YYYY-MM-DD
 operations.0.progress: 进度0-100
 （增加更多运营任务，3-5个）
 
@@ -845,7 +897,7 @@ innovations.0.progress: 进度0-100
 innovations.0.budget: 预算数字
 innovations.0.spent: 已花费数字
 innovations.0.team.0: 团队成员1
-innovations.0.deadline: 截止日期
+innovations.0.deadline: 截止日期YYYY-MM-DD
 innovations.0.impact: 影响0-100
 innovations.0.progressDescription: 进展描述
 innovations.0.bottleneck: 瓶颈
@@ -854,7 +906,7 @@ innovations.0.bottleneck: 瓶颈
 news.0.id: news-001
 news.0.title: 新闻标题
 news.0.source: 来源
-news.0.date: 日期
+news.0.date: 日期YYYY-MM-DD
 news.0.impact: positive或negative或neutral
 news.0.summary: 新闻摘要
 （增加更多新闻，2-3条）
@@ -869,7 +921,30 @@ competitors.0.strength: 优势
 competitors.0.weakness: 劣势
 competitors.0.performanceIndex: 绩效指数0-100
 competitors.0.marketExpectationIndex: 市场预期指数0-100
+competitors.0.influenceIndex: 影响指数0-100
+competitors.0.commercialDependency: 商业依赖度0-100
+competitors.0.technologyMonopoly: 技术垄断度0-100
+competitors.0.playerShareholding: 玩家持股比例0-100
 （增加更多竞争对手，2-3个）
+
+suppliers.0.id: supp-001
+suppliers.0.name: 供应商名称
+suppliers.0.type: supplier或distributor或partner
+suppliers.0.category: 类别
+suppliers.0.contactPerson: 联系人
+suppliers.0.relationshipLevel: 关系等级0-100
+suppliers.0.contractValue: 合同金额数字
+suppliers.0.contractExpiry: 合同到期日期
+suppliers.0.performanceIndex: 绩效指数0-100
+suppliers.0.marketExpectationIndex: 市场预期指数0-100
+suppliers.0.influenceIndex: 影响指数0-100
+suppliers.0.commercialDependency: 商业依赖度0-100
+suppliers.0.technologyMonopoly: 技术垄断度0-100
+suppliers.0.reliability: 可靠性0-100
+suppliers.0.quality: 质量0-100
+suppliers.0.responseTime: 响应时间数字
+suppliers.0.notes: 备注
+（增加更多供应商，2-3个）
 
 npcs.0.id: npc-001
 npcs.0.name: NPC姓名
@@ -885,26 +960,41 @@ npcs.0.isFirstMeeting: true
 npcs.0.chatHistory: []
 （增加更多NPC，3-5个）
 
-shareholdings.0.id: share-001
-shareholdings.0.name: 股东名称
-shareholdings.0.type: founder或institution或public或employee或other
-shareholdings.0.shares: 股份数数字
-shareholdings.0.percentage: 持股比例数字
-shareholdings.0.votingPower: 投票权数字
-shareholdings.0.description: 描述
-（增加更多股东）
+businessLines.0.id: bl-001
+businessLines.0.name: 业务线名称
+businessLines.0.description: 描述
+businessLines.0.revenue: 营收数字
+businessLines.0.profit: 利润数字
+businessLines.0.growthRate: 增长率数字
+businessLines.0.employees: 员工人数数字
+businessLines.0.products.0: 产品1ID
+（增加更多业务线，1-2个）
+
+markets.0.id: market-001
+markets.0.name: 市场名称
+markets.0.region: 地区
+markets.0.size: 市场规模数字
+markets.0.growthRate: 增长率数字
+markets.0.competition: 竞争程度0-100
+markets.0.ourShare: 我方份额数字
+markets.0.targetShare: 目标份额数字
+markets.0.revenue: 营收数字
+（增加更多市场，1-2个）
 === END_ADD ===
 
-请确保数据合理，符合${companyInfo.status}阶段的公司规模。
-重要规则：
-1. 使用路径键值对格式，每行一个字段
-2. 用点号.表示层级关系，例如 company.name
-3. 用数字索引表示数组，例如 products.0.name
-4. 字符串不需要引号
-5. 数字直接写，不要加单位文字
-6. 布尔值用true或false
-7. 所有数据模块都必须填写完整，不要遗漏
-8. 数组项从0开始编号，连续编号不要跳号`;
+强制要求：
+1. 必须生成以上所有数据模块，一个都不能少
+2. 每个模块的所有字段都必须填写，不能留空
+3. 数组类型必须生成多个项目（数量参考括号中的说明）
+4. 数据必须合理，符合公司发展阶段
+5. 使用路径键值对格式，每行一个字段
+6. 用点号.表示层级关系
+7. 用数字索引表示数组，从0开始连续编号
+8. 字符串不需要引号
+9. 数字直接写，不要加单位文字
+10. 布尔值用true或false
+11. 日期格式为YYYY-MM-DD
+12. 时间格式为YYYY-MM-DD HH:mm:ss`;
 
   try {
     const result = await callProModel(prompt);
@@ -924,6 +1014,16 @@ shareholdings.0.description: 描述
       }
     }
 
+    if (narrative === '游戏开始，请输入您的决策指令。') {
+      const firstBlockIdx = result.search(/(=== (TIME|ADD|MODIFY|DELETE|SUMMARY) ===|\[(TIME|ADD|MODIFY|DELETE|SUMMARY)\])/i);
+      if (firstBlockIdx > 20) {
+        const beforeBlocks = result.substring(0, firstBlockIdx).trim();
+        if (beforeBlocks.length > 20) {
+          narrative = beforeBlocks.replace(/^【叙事正文】\s*\n?/i, '').trim();
+        }
+      }
+    }
+
     const timeBlock = extractBlock(result, 'TIME');
     if (timeBlock) {
       newTime = timeBlock;
@@ -935,7 +1035,42 @@ shareholdings.0.description: 描述
         addData = parsePKV(addBlock);
         console.log('PKV解析结果:', Object.keys(addData));
       } catch (e) {
-        console.error('PKV解析失败:', e);
+        console.error('PKV解析失败，尝试JSON解析:', e);
+      }
+
+      if (Object.keys(addData).length === 0) {
+        try {
+          const cleanJson = addBlock.trim();
+          if (cleanJson.startsWith('{')) {
+            addData = JSON.parse(cleanJson);
+            console.log('JSON解析成功');
+          }
+        } catch (e) {
+          console.error('JSON解析也失败，尝试修复:', e);
+          try {
+            const fixedJson = addBlock
+              .replace(/,\s*([}\]])/g, '$1')
+              .replace(/(['"])?([a-zA-Z0-9_\u4e00-\u9fa5]+)(['"])?\s*:/g, '"$2":')
+              .replace(/'([^']*)'/g, '"$1"');
+            addData = JSON.parse(fixedJson);
+            console.log('修复后JSON解析成功');
+          } catch (e2) {
+            console.error('修复后JSON解析也失败:', e2);
+          }
+        }
+      }
+    }
+
+    if (Object.keys(addData).length === 0) {
+      console.warn('未找到ADD块或解析失败，尝试从全文提取');
+      const fullJsonMatch = result.match(/\{[\s\S]*"company"[\s\S]*\}/);
+      if (fullJsonMatch) {
+        try {
+          addData = JSON.parse(fullJsonMatch[0]);
+          console.log('从全文提取JSON成功');
+        } catch (e) {
+          console.error('从全文提取JSON也失败:', e);
+        }
       }
     }
 
@@ -956,6 +1091,9 @@ shareholdings.0.description: 描述
       competitors: addData.competitors || [],
       npcs: addData.npcs || [],
       shareholdings: addData.shareholdings || [],
+      suppliers: addData.suppliers || [],
+      businessLines: addData.businessLines || [],
+      markets: addData.markets || [],
     };
   } catch (error) {
     console.error('生成游戏初始数据失败:', error);
