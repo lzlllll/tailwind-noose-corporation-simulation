@@ -38,7 +38,7 @@ export default function Strategy() {
             </div>
             <div>
               <p className="text-text-secondary text-sm">战略总数</p>
-              <p className="text-2xl font-bold text-white">{strategies.length}</p>
+              <p className="text-2xl font-bold text-white">{(strategies || []).length}</p>
             </div>
           </div>
         </div>

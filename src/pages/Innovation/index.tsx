@@ -14,9 +14,11 @@ const categoryColors = {
 export default function Innovation() {
   const { innovations } = useGameStore();
 
-  const totalBudget = innovations.reduce((sum, p) => sum + p.budget, 0);
-  const totalSpent = innovations.reduce((sum, p) => sum + p.spent, 0);
-  const avgProgress = Math.round(innovations.reduce((sum, p) => sum + p.progress, 0) / innovations.length);
+  const totalBudget = (innovations || []).reduce((sum, p) => sum + p.budget, 0);
+  const totalSpent = (innovations || []).reduce((sum, p) => sum + p.spent, 0);
+  const avgProgress = (innovations || []).length > 0
+    ? Math.round((innovations || []).reduce((sum, p) => sum + p.progress, 0) / (innovations || []).length)
+    : 0;
 
   const milestones = [
     { id: 1, title: '量子计算原型验证', date: '2024-06', status: 'completed' },
@@ -52,7 +54,7 @@ export default function Innovation() {
         />
         <StatCard
           title="项目数量"
-          value={innovations.length}
+          value={(innovations || []).length}
           unit="个"
           change={0}
           icon={<Target className="text-accent-blue" size={24} />}

@@ -98,7 +98,7 @@ export default function Overview() {
             />
             <StatCard
               title="员工数"
-              value={employees.length > 0 ? employees.length.toString() : '--'}
+              value={(employees || []).length > 0 ? employees.length.toString() : '--'}
               unit="人"
               change={5.8}
               icon={<Users className="text-accent-purple" size={24} />}
@@ -120,9 +120,9 @@ export default function Overview() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card title="核心产品表现">
-              {products.length > 0 ? (
+              {(products || []).length > 0 ? (
                 <div className="space-y-4">
-                  {products.slice(0, 4).map((product) => (
+                  {(products || []).slice(0, 4).map((product) => (
                     <div key={product.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-gradient-to-br from-accent-gold/20 to-accent-green/20 rounded-lg flex items-center justify-center">

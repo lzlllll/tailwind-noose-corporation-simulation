@@ -149,7 +149,7 @@ export default function External() {
                   </div>
                 </div>
               ))}
-              {competitors.length === 0 && (
+              {(competitors || []).length === 0 && (
                 <div className="text-center text-text-muted py-8">暂无竞争对手数据</div>
               )}
             </div>
@@ -157,7 +157,7 @@ export default function External() {
 
           <Card title="行业趋势">
             <div className="space-y-4">
-              {news.length === 0 && (
+              {(news || []).length === 0 && (
                 <div className="text-center text-text-muted py-4">暂无行业趋势数据</div>
               )}
             </div>

@@ -69,10 +69,10 @@ export default function Operations() {
   });
 
   const stats = {
-    total: operations.length,
-    pending: operations.filter(t => t.status === 'pending').length,
-    inProgress: operations.filter(t => t.status === 'in-progress').length,
-    completed: operations.filter(t => t.status === 'completed').length,
+    total: (operations || []).length,
+    pending: (operations || []).filter(t => t.status === 'pending').length,
+    inProgress: (operations || []).filter(t => t.status === 'in-progress').length,
+    completed: (operations || []).filter(t => t.status === 'completed').length,
   };
 
   const handleTabChange = (tab: TabType) => {

@@ -41,13 +41,13 @@ export default function Organization() {
     return matchesSearch && matchesDept;
   });
 
-  const managementEmployees = employees.filter(e => e.level === 'executive' || e.level === 'manager');
+  const managementEmployees = (employees || []).filter(e => e.level === 'executive' || e.level === 'manager');
 
   const stats = {
-    total: employees.length,
-    executives: employees.filter(e => e.level === 'executive').length,
-    managers: employees.filter(e => e.level === 'manager').length,
-    seniors: employees.filter(e => e.level === 'senior').length,
+    total: (employees || []).length,
+    executives: (employees || []).filter(e => e.level === 'executive').length,
+    managers: (employees || []).filter(e => e.level === 'manager').length,
+    seniors: (employees || []).filter(e => e.level === 'senior').length,
   };
 
   const handleTabChange = (tab: TabType) => {
