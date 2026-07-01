@@ -949,7 +949,6 @@ suppliers.0.notes: 备注
 
 npcs.0.id: npc-001
 npcs.0.name: NPC姓名
-npcs.0.avatar: 头像URL
 npcs.0.role: 职位
 npcs.0.company: 公司
 npcs.0.relationship: 关系值0-100

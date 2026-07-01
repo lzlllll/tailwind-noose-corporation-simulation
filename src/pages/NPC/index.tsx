@@ -6,6 +6,19 @@ import { generateNPCResponse, NPCChatResponse } from '@/services/aiService';
 import { NPCMessage } from '@/data/mockData';
 import { asArray } from '@/lib/utils';
 
+function getNameInitials(name: string): string {
+  if (!name) return '?';
+  const trimmed = name.trim();
+  if (/[\u4e00-\u9fa5]/.test(trimmed)) {
+    return trimmed.charAt(0);
+  }
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return trimmed.slice(0, 2).toUpperCase();
+}
+
 const relationshipLevels = [
   { min: 0, max: 20, label: '敌对', color: 'bg-status-danger' },
   { min: 21, max: 40, label: '冷淡', color: 'bg-status-warning' },
@@ -197,7 +210,7 @@ export default function NPC() {
                   >
                     <div className="flex items-start gap-4">
                       <div className="w-14 h-14 bg-gradient-to-br from-accent-gold/20 to-accent-green/20 rounded-xl flex items-center justify-center relative">
-                        <span className="text-accent-gold font-semibold text-lg">{npc.avatar}</span>
+                        <span className="text-accent-gold font-semibold text-lg">{getNameInitials(npc.name)}</span>
                         {npcUnread > 0 && (
                           <span className="absolute -top-1 -right-1 w-5 h-5 bg-status-danger rounded-full flex items-center justify-center text-xs text-white">
                             {npcUnread}
