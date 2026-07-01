@@ -276,7 +276,7 @@ export default function NPC() {
                 )}
 
                 <div className="h-64 overflow-y-auto space-y-4 mb-4 scrollbar-thin">
-                  {activeNPC.chatHistory.length === 0 ? (
+                  {(activeNPC.chatHistory || []).length === 0 ? (
                     <div className="text-center py-12">
                       <MessageCircle className="mx-auto text-text-muted mb-4" size={32} />
                       <p className="text-text-secondary text-sm">
@@ -287,7 +287,7 @@ export default function NPC() {
                       )}
                     </div>
                   ) : (
-                    activeNPC.chatHistory.map((msg) => (
+                    (activeNPC.chatHistory || []).map((msg) => (
                       <div
                         key={msg.id}
                         className={`flex ${msg.sender === 'player' ? 'justify-end' : 'justify-start'}`}
