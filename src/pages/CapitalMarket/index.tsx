@@ -74,7 +74,7 @@ export default function CapitalMarket() {
       return;
     }
 
-    const existingHolding = playerInfo.stockHoldings.find(h => h.stockId === tradeModal.stockId);
+    const existingHolding = (playerInfo.stockHoldings || []).find(h => h.stockId === tradeModal.stockId);
 
     if (existingHolding) {
       const newShares = existingHolding.shares + tradeModal.shares;
@@ -116,7 +116,7 @@ export default function CapitalMarket() {
   const handleSell = () => {
     if (!playerInfo || tradeModal.shares <= 0) return;
 
-    const existingHolding = playerInfo.stockHoldings.find(h => h.stockId === tradeModal.stockId);
+    const existingHolding = (playerInfo.stockHoldings || []).find(h => h.stockId === tradeModal.stockId);
     if (!existingHolding || existingHolding.shares < tradeModal.shares) {
       alert('持仓不足');
       return;
@@ -245,8 +245,8 @@ export default function CapitalMarket() {
                     </tr>
                   </thead>
                   <tbody>
-                    {stocks.map((stock) => {
-                      const holding = playerInfo?.stockHoldings.find(h => h.stockId === stock.id);
+                    {(stocks || []).map((stock) => {
+                      const holding = (playerInfo?.stockHoldings || []).find(h => h.stockId === stock.id);
                       return (
                         <tr key={stock.id} className="border-b border-white/5 hover:bg-white/5">
                           <td className="py-3 text-accent-gold font-medium">{stock.stockCode}</td>
@@ -547,7 +547,7 @@ export default function CapitalMarket() {
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-text-secondary text-sm">持有股数</span>
                       <span className="text-white font-medium">
-                        {playerInfo.stockHoldings.find(h => h.stockId === tradeModal.stockId)?.shares || 0}股
+                        {(playerInfo.stockHoldings || []).find(h => h.stockId === tradeModal.stockId)?.shares || 0}股
                       </span>
                     </div>
                   )}
@@ -562,7 +562,7 @@ export default function CapitalMarket() {
                   onChange={(e) => setTradeModal(prev => ({ ...prev, shares: parseInt(e.target.value) || 0 }))}
                   min={0}
                   max={tradeModal.tradeType === 'sell'
-                    ? playerInfo?.stockHoldings.find(h => h.stockId === tradeModal.stockId)?.shares || 0
+                    ? (playerInfo?.stockHoldings || []).find(h => h.stockId === tradeModal.stockId)?.shares || 0
                     : Math.floor((playerInfo?.personalCash || 0) / tradeModal.currentPrice)
                   }
                   className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-accent-gold"

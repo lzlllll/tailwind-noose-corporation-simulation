@@ -42,7 +42,7 @@ export default function NPC() {
     gameTime,
   } = useGameStore();
 
-  const activeNPC = npcs.find(n => n.id === activeNPCId);
+  const activeNPC = (npcs || []).find(n => n.id === activeNPCId);
 
   const unreadCount = activeNPC
     ? (activeNPC.chatHistory || []).filter(m => m.sender === 'npc' && !m.isRead).length
@@ -70,7 +70,7 @@ export default function NPC() {
   const handleSelectNPC = (npcId: string) => {
     setActiveNPCId(npcId);
 
-    const npc = npcs.find(n => n.id === npcId);
+    const npc = (npcs || []).find(n => n.id === npcId);
     if (npc) {
       const unreadMessages = (npc.chatHistory || []).filter(m => m.sender === 'npc' && !m.isRead);
       if (unreadMessages.length > 0) {
@@ -179,7 +179,7 @@ export default function NPC() {
         <div className="lg:col-span-2">
           <Card title="角色列表">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {npcs.map((npc) => {
+              {(npcs || []).map((npc) => {
                 const relLevel = getRelationshipLevel(npc.relationship);
                 const npcUnread = (npc.chatHistory || []).filter(m => m.sender === 'npc' && !m.isRead).length;
                 const hasPendingReply = npc.pendingReply && !parseTime(gameTime, npc.pendingReply.replyAfterTime);
