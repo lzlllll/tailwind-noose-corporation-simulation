@@ -201,7 +201,7 @@ export default function NarrativePanel() {
   };
 
   const getRecentMessages = () => {
-    if (chatMessages.length === 0) return [];
+    if ((chatMessages || []).length === 0) return [];
     const assistantMessages = chatMessages.filter(m => m.role === 'assistant');
     return assistantMessages.slice(-4).map(m => m.content);
   };
@@ -309,9 +309,9 @@ export default function NarrativePanel() {
   };
 
   const handleRegenerate = async () => {
-    if (isAIProcessing || chatMessages.length === 0) return;
+    if (isAIProcessing || (chatMessages || []).length === 0) return;
 
-    const hasUserMessages = chatMessages.some(m => m.role === 'user');
+    const hasUserMessages = (chatMessages || []).some(m => m.role === 'user');
 
     if (!hasUserMessages && initialSetup.player && initialSetup.company) {
       setIsAIProcessing(true);
@@ -398,12 +398,12 @@ export default function NarrativePanel() {
       return;
     }
 
-    const lastUserIndex = [...chatMessages].reverse().findIndex(m => m.role === 'user');
+    const lastUserIndex = [...(chatMessages || [])].reverse().findIndex(m => m.role === 'user');
     if (lastUserIndex === -1) return;
 
-    const lastUserMessage = chatMessages[chatMessages.length - 1 - lastUserIndex];
+    const lastUserMessage = (chatMessages || [])[(chatMessages || []).length - 1 - lastUserIndex];
 
-    const newMessages = chatMessages.slice(0, chatMessages.length - 1 - lastUserIndex);
+    const newMessages = (chatMessages || []).slice(0, (chatMessages || []).length - 1 - lastUserIndex);
     useGameStore.getState().setChatMessages(newMessages);
 
     generateResponse(lastUserMessage.content, true);
@@ -475,7 +475,7 @@ export default function NarrativePanel() {
       </div>
 
       <div className="flex-1 overflow-auto p-4 space-y-4 scrollbar-thin">
-        {chatMessages.length === 0 && !isAIProcessing ? (
+        {(chatMessages || []).length === 0 && !isAIProcessing ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Bot className="text-text-muted mb-4" size={48} />
             <p className="text-text-secondary mb-2">欢迎来到星辰科技集团</p>
@@ -591,7 +591,7 @@ export default function NarrativePanel() {
             </button>
             <button
               onClick={handleRegenerate}
-              disabled={isAIProcessing || chatMessages.length === 0 || (!initialSetup.player && !chatMessages.some(m => m.role === 'user'))}
+              disabled={isAIProcessing || (chatMessages || []).length === 0 || (!initialSetup.player && !(chatMessages || []).some(m => m.role === 'user'))}
               title="重新生成上一条回复"
               className="px-4 py-2 bg-white/5 text-text-secondary rounded-xl hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >

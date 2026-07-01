@@ -15,17 +15,17 @@ export default function External() {
   const [selectedNews, setSelectedNews] = useState<string | null>(null);
   const { news, competitors } = useGameStore();
 
-  const totalMarketSize = competitors.length > 0
-    ? Math.round(competitors.reduce((sum, c) => sum + (c.revenue || 0), 0) / (competitors.reduce((sum, c) => sum + (c.marketShare || 0), 0) / 100 || 1))
+  const totalMarketSize = (competitors || []).length > 0
+    ? Math.round((competitors || []).reduce((sum, c) => sum + (c.revenue || 0), 0) / ((competitors || []).reduce((sum, c) => sum + (c.marketShare || 0), 0) / 100 || 1))
     : 0;
-  const avgMarketShare = competitors.length > 0
-    ? safeToFixed(competitors.reduce((sum, c) => sum + (c.marketShare || 0), 0) / competitors.length, 1)
+  const avgMarketShare = (competitors || []).length > 0
+    ? safeToFixed((competitors || []).reduce((sum, c) => sum + (c.marketShare || 0), 0) / (competitors || []).length, 1)
     : '0';
 
   const marketStats = {
     totalMarketSize,
     growthRate: 18.5,
-    competitors: competitors.length,
+    competitors: (competitors || []).length,
     avgMarketShare: parseFloat(avgMarketShare),
   };
 

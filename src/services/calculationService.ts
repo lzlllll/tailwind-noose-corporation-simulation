@@ -73,26 +73,26 @@ export function calculateAllMetrics(): CalculatedMetrics {
   const profitMargin = finance.revenue > 0 ? (profit / finance.revenue) * 100 : 0;
   const cashBalance = finance.cash + finance.investments - finance.debt;
 
-  const lastQuarter = financeHistory.length > 0 ? financeHistory[financeHistory.length - 1] : null;
-  const revenueGrowth = lastQuarter && lastQuarter.revenue > 0 
-    ? ((finance.revenue - lastQuarter.revenue) / lastQuarter.revenue) * 100 
+  const lastQuarter = (financeHistory || []).length > 0 ? financeHistory[financeHistory.length - 1] : null;
+  const revenueGrowth = lastQuarter && lastQuarter.revenue > 0
+    ? ((finance.revenue - lastQuarter.revenue) / lastQuarter.revenue) * 100
     : 0;
-  const expenseGrowth = lastQuarter && lastQuarter.expenses > 0 
-    ? ((finance.expenses - lastQuarter.expenses) / lastQuarter.expenses) * 100 
+  const expenseGrowth = lastQuarter && lastQuarter.expenses > 0
+    ? ((finance.expenses - lastQuarter.expenses) / lastQuarter.expenses) * 100
     : 0;
-  const profitGrowth = lastQuarter && lastQuarter.profit > 0 
-    ? ((profit - lastQuarter.profit) / lastQuarter.profit) * 100 
-    : 0;
-
-  const marketShareGrowth = company && company.marketShare > 0 
-    ? company.marketShare 
+  const profitGrowth = lastQuarter && lastQuarter.profit > 0
+    ? ((profit - lastQuarter.profit) / lastQuarter.profit) * 100
     : 0;
 
-  const employeeGrowth = employees.length > 0 ? employees.length : 0;
-  const productGrowth = products.length > 0 ? products.length : 0;
+  const marketShareGrowth = company && company.marketShare > 0
+    ? company.marketShare
+    : 0;
 
-  const roi = finance.investments > 0 
-    ? (profit / finance.investments) * 100 
+  const employeeGrowth = (employees || []).length > 0 ? employees.length : 0;
+  const productGrowth = (products || []).length > 0 ? products.length : 0;
+
+  const roi = finance.investments > 0
+    ? (profit / finance.investments) * 100
     : 0;
 
   return {
@@ -111,24 +111,24 @@ export function calculateAllMetrics(): CalculatedMetrics {
 
 export function checkMonthChange(newTime: string, previousTime: string): boolean {
   if (!previousTime) return false;
-  
+
   const newDate = new Date(newTime);
   const prevDate = new Date(previousTime);
-  
-  return newDate.getMonth() !== prevDate.getMonth() || 
-         newDate.getFullYear() !== prevDate.getFullYear();
+
+  return newDate.getMonth() !== prevDate.getMonth() ||
+    newDate.getFullYear() !== prevDate.getFullYear();
 }
 
 export function generateMonthlyCashFlow() {
   const store = useGameStore.getState();
   const finance = store.finance;
-  
+
   if (!finance) return;
-  
+
   const monthlyIncome = finance.revenue / 12;
   const monthlyExpense = finance.expenses / 12;
   const monthlyProfit = monthlyIncome - monthlyExpense;
-  
+
   const newCashFlowItem = {
     id: `cf-${Date.now()}`,
     name: monthlyProfit >= 0 ? '月度营收' : '月度支出',
@@ -139,9 +139,9 @@ export function generateMonthlyCashFlow() {
     description: `本月结余: ${monthlyProfit >= 0 ? '+' : '-'}${Math.abs(monthlyProfit).toLocaleString()}元`,
     date: new Date().toISOString().split('T')[0],
   };
-  
+
   store.setCashFlow([...store.cashFlow, newCashFlowItem]);
-  
+
   const newCash = finance.cash + monthlyProfit;
   store.setFinance({
     ...finance,
@@ -153,13 +153,13 @@ export function generateMarketShareData(): MarketShareData[] {
   const store = useGameStore.getState();
   const company = store.company;
   const competitors = store.competitors;
-  
-  if (!company && competitors.length === 0) {
+
+  if (!company && (competitors || []).length === 0) {
     return [];
   }
-  
+
   const data: MarketShareData[] = [];
-  
+
   if (company) {
     data.push({
       name: company.name || '本企业',
@@ -167,7 +167,7 @@ export function generateMarketShareData(): MarketShareData[] {
       color: '#f59e0b',
     });
   }
-  
+
   competitors.forEach((comp, index) => {
     const colors = ['#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#6b7280'];
     data.push({
@@ -176,7 +176,7 @@ export function generateMarketShareData(): MarketShareData[] {
       color: colors[index % colors.length],
     });
   });
-  
+
   return data;
 }
 
@@ -184,15 +184,15 @@ export function generateRevenueSourceData(): RevenueSourceData[] {
   const store = useGameStore.getState();
   const products = store.products;
   const businessLines = store.businessLines;
-  
-  if (products.length === 0 && businessLines.length === 0) {
+
+  if ((products || []).length === 0 && (businessLines || []).length === 0) {
     return [];
   }
-  
+
   const data: RevenueSourceData[] = [];
   const colors = ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#6b7280'];
-  
-  if (businessLines.length > 0) {
+
+  if ((businessLines || []).length > 0) {
     businessLines.forEach((bl, index) => {
       data.push({
         name: bl.name,
@@ -200,7 +200,7 @@ export function generateRevenueSourceData(): RevenueSourceData[] {
         color: colors[index % colors.length],
       });
     });
-  } else if (products.length > 0) {
+  } else if ((products || []).length > 0) {
     products.forEach((prod, index) => {
       data.push({
         name: prod.name,
@@ -209,20 +209,20 @@ export function generateRevenueSourceData(): RevenueSourceData[] {
       });
     });
   }
-  
+
   return data;
 }
 
 export function generateRevenueByRegion(): RevenueSourceData[] {
   const store = useGameStore.getState();
   const markets = store.markets;
-  
-  if (markets.length === 0) {
+
+  if ((markets || []).length === 0) {
     return [];
   }
-  
+
   const colors = ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444'];
-  
+
   return markets.map((market, index) => ({
     name: market.region || market.name,
     value: market.revenue || 0,
@@ -235,14 +235,14 @@ export function generateInvestmentData(): InvestmentData[] {
   const innovations = store.innovations;
   const operations = store.operations;
   const strategies = store.strategies;
-  
+
   const data: InvestmentData[] = [];
   const colors = ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#6b7280'];
-  
+
   const totalRdBudget = innovations.reduce((sum, inn) => sum + inn.budget, 0);
   const totalOperationsBudget = operations.reduce((sum, op) => sum + (op.priority === 'critical' || op.priority === 'high' ? 100000 : 50000), 0);
   const totalStrategyBudget = strategies.reduce((sum, st) => sum + st.budget, 0);
-  
+
   if (totalRdBudget > 0) {
     data.push({
       name: '研发投入',
@@ -250,7 +250,7 @@ export function generateInvestmentData(): InvestmentData[] {
       color: colors[0],
     });
   }
-  
+
   if (totalOperationsBudget > 0) {
     data.push({
       name: '运营投入',
@@ -258,7 +258,7 @@ export function generateInvestmentData(): InvestmentData[] {
       color: colors[1],
     });
   }
-  
+
   if (totalStrategyBudget > 0) {
     data.push({
       name: '战略投入',
@@ -266,7 +266,7 @@ export function generateInvestmentData(): InvestmentData[] {
       color: colors[2],
     });
   }
-  
+
   const finance = store.finance;
   if (finance && finance.investments > 0) {
     const other = finance.investments - totalRdBudget - totalOperationsBudget - totalStrategyBudget;
@@ -278,18 +278,18 @@ export function generateInvestmentData(): InvestmentData[] {
       });
     }
   }
-  
+
   return data;
 }
 
 export function generateRevenueTrendData(): RevenueTrendData[] {
   const store = useGameStore.getState();
   const financeHistory = store.financeHistory;
-  
-  if (financeHistory.length === 0) {
+
+  if ((financeHistory || []).length === 0) {
     return [];
   }
-  
+
   return financeHistory.map((fh) => ({
     month: fh.quarter,
     revenue: fh.revenue,
@@ -302,14 +302,14 @@ export function generateMarketShareTrendData(): MarketShareTrendData[] {
   const store = useGameStore.getState();
   const company = store.company;
   const competitors = store.competitors;
-  
-  if (!company && competitors.length === 0) {
+
+  if (!company && (competitors || []).length === 0) {
     return [];
   }
-  
+
   const months = ['1月', '2月', '3月', '4月', '5月', '6月'];
   const baseShare = company?.marketShare || 20;
-  
+
   return months.map((month, index) => ({
     month,
     ourShare: baseShare + (Math.random() * 5 - 2),
@@ -322,22 +322,22 @@ export function calculateStockPrices(): Stock[] {
   const store = useGameStore.getState();
   const competitors = store.competitors;
   const suppliers = store.suppliers;
-  
+
   const stocks: Stock[] = [];
-  
+
   competitors.forEach((comp, index) => {
     if (comp.performanceIndex !== undefined && comp.marketExpectationIndex !== undefined) {
       const basePrice = 10 + comp.marketShare * 2;
       const performanceFactor = comp.performanceIndex / 100;
       const expectationFactor = comp.marketExpectationIndex / 100;
-      
+
       const currentPrice = basePrice * (0.7 + performanceFactor * 0.5 + expectationFactor * 0.3);
       const previousClose = currentPrice * (1 + (Math.random() * 0.06 - 0.03));
       const change = currentPrice - previousClose;
       const changePercent = (change / previousClose) * 100;
       const marketCap = currentPrice * (comp.revenue / currentPrice * 10);
       const peRatio = currentPrice / (comp.revenue * 0.1 / (comp.revenue / currentPrice * 10));
-      
+
       stocks.push({
         id: `stock-comp-${index}`,
         companyId: comp.id,
@@ -358,19 +358,19 @@ export function calculateStockPrices(): Stock[] {
       });
     }
   });
-  
+
   suppliers.forEach((sup, index) => {
     if (sup.performanceIndex !== undefined && sup.marketExpectationIndex !== undefined && sup.type === 'supplier') {
       const basePrice = 5 + sup.quality * 0.1;
       const performanceFactor = sup.performanceIndex / 100;
       const expectationFactor = sup.marketExpectationIndex / 100;
-      
+
       const currentPrice = basePrice * (0.7 + performanceFactor * 0.5 + expectationFactor * 0.3);
       const previousClose = currentPrice * (1 + (Math.random() * 0.06 - 0.03));
       const change = currentPrice - previousClose;
       const changePercent = (change / previousClose) * 100;
       const marketCap = currentPrice * 10000000;
-      
+
       stocks.push({
         id: `stock-sup-${index}`,
         companyId: sup.id,
@@ -391,7 +391,7 @@ export function calculateStockPrices(): Stock[] {
       });
     }
   });
-  
+
   return stocks;
 }
 
@@ -403,7 +403,7 @@ export function calculateInfluenceIndex(
   const shareholdingFactor = playerShareholding * 0.4;
   const dependencyFactor = commercialDependency * 0.3;
   const monopolyFactor = technologyMonopoly * 0.3;
-  
+
   return Math.min(100, Math.max(0, Math.round(shareholdingFactor + dependencyFactor + monopolyFactor)));
 }
 
@@ -419,37 +419,37 @@ export function calculateLoanEligibility(creditRating: string, creditScore: numb
     'BB': 0.6,
     'B': 0.4,
   };
-  
+
   const ratingMultiplier = ratingMultipliers[creditRating] || 0.5;
   const scoreFactor = creditScore / 100;
   const marketFactor = Math.log10(marketValue + 1) / 10;
-  
+
   return Math.min(100, Math.max(0, Math.round((ratingMultiplier * scoreFactor * 50 + marketFactor * 50) * 100)));
 }
 
 export function generateShareholdingData(): { name: string; value: number; color: string; type: string; shares: number; influence: number }[] {
   const store = useGameStore.getState();
   const company = store.company;
-  
+
   if (!company) {
     return [];
   }
-  
+
   const shareholdings = store.shareholdings || [];
-  
+
   if (shareholdings.length === 0) {
     return [];
   }
-  
+
   const sortedByShare = [...shareholdings].sort((a, b) => b.percentage - a.percentage);
-  
+
   const influenceRanks = sortedByShare.map((sh, index) => {
     let influence = 100 - index * 15;
     if (sh.type === 'founder') influence += 20;
     else if (sh.type === 'institution') influence += 10;
     return Math.min(100, Math.max(0, influence));
   });
-  
+
   return shareholdings.map((sh, index) => {
     const colorMap: Record<string, string> = {
       founder: '#f59e0b',
@@ -458,7 +458,7 @@ export function generateShareholdingData(): { name: string; value: number; color
       employee: '#8b5cf6',
       other: '#6b7280',
     };
-    
+
     return {
       name: sh.name,
       value: sh.percentage,

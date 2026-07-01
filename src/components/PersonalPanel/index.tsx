@@ -71,9 +71,9 @@ export default function PersonalPanel() {
               <Building className="w-4 h-4 text-accent-gold" />
               个人资产
             </h3>
-            {playerInfo.personalAssets.length > 0 ? (
+            {(playerInfo.personalAssets || []).length > 0 ? (
               <div className="space-y-2">
-                {playerInfo.personalAssets.map(asset => {
+                {(playerInfo.personalAssets || []).map(asset => {
                   const Icon = assetTypeIcons[asset.type];
                   return (
                     <div key={asset.id} className="glass-card p-3 rounded-lg flex items-center justify-between">
@@ -104,9 +104,9 @@ export default function PersonalPanel() {
               <TrendingUp className="w-4 h-4 text-accent-gold" />
               股票持仓
             </h3>
-            {playerInfo.stockHoldings.length > 0 ? (
+            {(playerInfo.stockHoldings || []).length > 0 ? (
               <div className="space-y-2">
-                {playerInfo.stockHoldings.map(holding => {
+                {(playerInfo.stockHoldings || []).map(holding => {
                   const profitColor = holding.profitLoss >= 0 ? 'text-accent-green' : 'text-red-400';
                   return (
                     <div key={holding.id} className="glass-card p-3 rounded-lg">

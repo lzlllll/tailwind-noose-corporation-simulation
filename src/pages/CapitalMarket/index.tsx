@@ -221,7 +221,7 @@ export default function CapitalMarket() {
           )}
 
           <Card title="其他上市公司">
-            {!isDataGenerated || stocks.length === 0 ? (
+            {!isDataGenerated || (stocks || []).length === 0 ? (
               <div className="text-center py-12">
                 <TrendingUp className="mx-auto text-text-muted mb-4" size={48} />
                 <p className="text-text-secondary">等待AI生成竞争对手和上下游厂商数据</p>
@@ -298,7 +298,7 @@ export default function CapitalMarket() {
             )}
           </Card>
 
-          {stocks.length > 0 && (
+          {(stocks || []).length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card title="表现指数分布">
                 <div className="grid grid-cols-2 gap-4">
@@ -367,7 +367,7 @@ export default function CapitalMarket() {
       {activeTab === 'shareholding' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card title="股权结构">
-            {!isDataGenerated || shareholdings.length === 0 ? (
+            {!isDataGenerated || (shareholdings || []).length === 0 ? (
               <div className="text-center py-12">
                 <PieChart className="mx-auto text-text-muted mb-4" size={48} />
                 <p className="text-text-secondary">等待AI生成股权结构数据</p>
@@ -407,7 +407,7 @@ export default function CapitalMarket() {
           </Card>
 
           <Card title="股东详情">
-            {!isDataGenerated || shareholdings.length === 0 ? (
+            {!isDataGenerated || (shareholdings || []).length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-text-muted">等待数据生成</p>
               </div>

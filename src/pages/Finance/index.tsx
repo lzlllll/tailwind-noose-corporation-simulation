@@ -69,8 +69,8 @@ export default function Finance() {
     { category: '净现金流', value: 400000000, inflow: true },
   ];
 
-  const incomeItems = cashFlow.filter(item => item.type === 'income');
-  const expenseItems = cashFlow.filter(item => item.type === 'expense');
+  const incomeItems = (cashFlow || []).filter(item => item.type === 'income');
+  const expenseItems = (cashFlow || []).filter(item => item.type === 'expense');
 
   const totalIncome = incomeItems.reduce((sum, item) => sum + item.amount, 0);
   const totalExpense = expenseItems.reduce((sum, item) => sum + item.amount, 0);
