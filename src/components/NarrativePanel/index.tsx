@@ -548,24 +548,21 @@ export default function NarrativePanel() {
                 </div>
               </div>
             )}
+            {narrativeText && (
+              <div className="glass-card p-4">
+                <h3 className="text-sm font-semibold text-accent-gold mb-2 flex items-center gap-2">
+                  <FileText size={14} />
+                  叙事正文
+                </h3>
+                <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-wrap">
+                  {narrativeText}
+                </p>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         )}
       </div>
-
-      {narrativeText && chatMessages.length > 0 && (
-        <div className="p-4 border-t border-white/10">
-          <div className="glass-card p-4">
-            <h3 className="text-sm font-semibold text-accent-gold mb-2 flex items-center gap-2">
-              <FileText size={14} />
-              叙事正文
-            </h3>
-            <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-wrap">
-              {narrativeText}
-            </p>
-          </div>
-        </div>
-      )}
 
       <div className="p-4 border-t border-white/10">
         <div className="flex gap-3">
