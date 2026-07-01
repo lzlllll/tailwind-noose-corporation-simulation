@@ -120,6 +120,7 @@ function applyDataOperations(operations: DataOperation[]) {
 
 export default function NarrativePanel() {
   const [inputValue, setInputValue] = useState('');
+  const [suggestedActions, setSuggestedActions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -127,7 +128,6 @@ export default function NarrativePanel() {
     addChatMessage,
     setIsAIProcessing,
     isAIProcessing,
-    narrativeText,
     setNarrativeText,
     aiSettings,
     openModal,
@@ -209,6 +209,7 @@ export default function NarrativePanel() {
 
   const generateResponse = async (userContent: string, skipAddUser: boolean = false) => {
     setIsAIProcessing(true);
+    setSuggestedActions([]);
 
     try {
       const gameData = {
@@ -277,6 +278,10 @@ export default function NarrativePanel() {
       if (response.operations && response.operations.length > 0) {
         applyDataOperations(response.operations);
         console.log('数据操作已应用:', response.operations);
+      }
+
+      if (response.suggestedActions && response.suggestedActions.length > 0) {
+        setSuggestedActions(response.suggestedActions);
       }
     } catch (error) {
       console.error('AI调用失败:', error);
@@ -417,6 +422,20 @@ export default function NarrativePanel() {
     }
   };
 
+  const handleSuggestionClick = async (suggestion: string) => {
+    if (isAIProcessing) return;
+    const userMessage = {
+      id: Date.now().toString(),
+      role: 'user' as const,
+      content: suggestion,
+      timestamp: new Date().toLocaleString('zh-CN'),
+    };
+    addChatMessage(userMessage);
+    setInputValue('');
+    setSuggestedActions([]);
+    await generateResponse(suggestion);
+  };
+
   const hasApiKey = aiSettings.apiKey.length > 0;
 
   return (
@@ -549,15 +568,17 @@ export default function NarrativePanel() {
                 </div>
               </div>
             )}
-            {narrativeText && (
-              <div className="glass-card p-4">
-                <h3 className="text-sm font-semibold text-accent-gold mb-2 flex items-center gap-2">
-                  <FileText size={14} />
-                  叙事正文
-                </h3>
-                <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-wrap">
-                  {narrativeText}
-                </p>
+            {suggestedActions.length > 0 && !isAIProcessing && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {suggestedActions.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="px-3 py-2 text-xs bg-accent-gold/10 text-accent-gold rounded-lg border border-accent-gold/20 hover:bg-accent-gold/20 hover:border-accent-gold/40 transition-all text-left"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
               </div>
             )}
             <div ref={messagesEndRef} />

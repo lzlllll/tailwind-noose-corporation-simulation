@@ -141,6 +141,7 @@ export interface AIResponse {
   newTime: string;
   summary?: string;
   contextSummary?: string;
+  suggestedActions?: string[];
 }
 
 export interface ContextParams {
@@ -441,6 +442,14 @@ news.0.summary: 新闻摘要
 employees: [emp-001, emp-002]
 === END_DELETE ===
 
+=== SUGGESTIONS ===
+每行一个推荐选项，3-4个，每个选项20字以内，描述玩家下一步可采取的行动
+例如：
+扩大生产线，提升产能
+与竞争对手进行价格战
+加大研发投入，开发新产品
+=== END_SUGGESTIONS ===
+
 重要规则：
 1. 数据块使用 === 块名 === 和 === END_块名 === 包裹
 2. 数据使用路径键值对格式，每行一个字段
@@ -448,7 +457,8 @@ employees: [emp-001, emp-002]
 4. 字符串不需要引号，数字直接写
 5. 布尔值用true或false
 6. MODIFY用于更新现有数据，ADD用于新增数据，DELETE用于删除数据
-7. 没有数据变更时可以省略对应的数据块`;
+7. 没有数据变更时可以省略对应的数据块
+8. SUGGESTIONS块必须包含3-4个推荐选项`;
 
   const proResult = await callProModel(proPrompt);
   console.log('Pro模型返回:', proResult);
@@ -459,6 +469,11 @@ employees: [emp-001, emp-002]
   const summaryBlock = extractBlock(proResult, 'SUMMARY');
   const extractedSummary = summaryBlock ? summaryBlock.trim() : undefined;
 
+  const suggestionsBlock = extractBlock(proResult, 'SUGGESTIONS');
+  const suggestedActions = suggestionsBlock
+    ? suggestionsBlock.split('\n').map(s => s.trim()).filter(s => s.length > 0)
+    : [];
+
   let narrative = proResult;
   const blockPatterns = [
     /=== TIME ===[\s\S]*?=== END_TIME ===/gi,
@@ -466,11 +481,13 @@ employees: [emp-001, emp-002]
     /=== MODIFY ===[\s\S]*?=== END_MODIFY ===/gi,
     /=== ADD ===[\s\S]*?=== END_ADD ===/gi,
     /=== DELETE ===[\s\S]*?=== END_DELETE ===/gi,
+    /=== SUGGESTIONS ===[\s\S]*?=== END_SUGGESTIONS ===/gi,
     /\[TIME\][\s\S]*?\[\/TIME\]/gi,
     /\[SUMMARY\][\s\S]*?\[\/SUMMARY\]/gi,
     /\[MODIFY\][\s\S]*?\[\/MODIFY\]/gi,
     /\[ADD\][\s\S]*?\[\/ADD\]/gi,
     /\[DELETE\][\s\S]*?\[\/DELETE\]/gi,
+    /\[SUGGESTIONS\][\s\S]*?\[\/SUGGESTIONS\]/gi,
   ];
 
   for (const pattern of blockPatterns) {
@@ -484,6 +501,7 @@ employees: [emp-001, emp-002]
     newTime: newTime || gameTime,
     summary: flashResult,
     contextSummary: extractedSummary,
+    suggestedActions,
   };
 }
 
