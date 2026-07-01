@@ -7,7 +7,7 @@ interface CardProps {
 
 export default function Card({ title, children, className = '', onClick }: CardProps) {
   return (
-    <div 
+    <div
       className={`glass-card ${className} ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
     >

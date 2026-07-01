@@ -29,7 +29,7 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-  const { currentPage, setCurrentPage, playerInfo, setPersonalPanelOpen } = useGameStore();
+  const { currentPage, setCurrentPage, playerInfo, setPersonalPanelOpen, company } = useGameStore();
 
   return (
     <aside className="w-64 bg-secondary/80 backdrop-blur-lg border-r border-white/10 flex flex-col h-screen sticky top-0">
@@ -39,7 +39,7 @@ export default function Sidebar() {
             <span className="text-primary font-bold text-lg">星</span>
           </div>
           <div>
-            <h1 className="text-lg font-bold text-white">星辰科技</h1>
+            <h1 className="text-lg font-bold text-white">{company?.name || '集团管理系统'}</h1>
             <p className="text-xs text-text-secondary">集团管理系统</p>
           </div>
         </div>

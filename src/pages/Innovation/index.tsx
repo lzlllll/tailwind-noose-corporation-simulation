@@ -20,13 +20,7 @@ export default function Innovation() {
     ? Math.round((innovations || []).reduce((sum, p) => sum + p.progress, 0) / (innovations || []).length)
     : 0;
 
-  const milestones = [
-    { id: 1, title: '量子计算原型验证', date: '2024-06', status: 'completed' },
-    { id: 2, title: 'AI大模型Beta发布', date: '2024-09', status: 'completed' },
-    { id: 3, title: '隐私计算框架上线', date: '2024-12', status: 'in-progress' },
-    { id: 4, title: '5G边缘融合方案', date: '2025-03', status: 'pending' },
-    { id: 5, title: '新一代量子产品', date: '2025-06', status: 'pending' },
-  ];
+  const milestones: { id: number; title: string; date: string; status: string }[] = [];
 
   return (
     <div className="flex-1 p-8 overflow-auto scrollbar-thin">
@@ -197,12 +191,7 @@ export default function Innovation() {
 
           <Card title="专利申请">
             <div className="space-y-3">
-              {[
-                { name: '量子加密算法', status: 'pending' },
-                { name: 'AI模型优化方法', status: 'approved' },
-                { name: '隐私计算框架', status: 'approved' },
-                { name: '边缘计算架构', status: 'pending' },
-              ].map((patent) => (
+              {[].map((patent: { name: string; status: string }) => (
                 <div key={patent.name} className="flex items-center justify-between p-2">
                   <span className="text-text-secondary text-sm">{patent.name}</span>
                   <span className={`text-xs px-2 py-0.5 rounded ${patent.status === 'approved'

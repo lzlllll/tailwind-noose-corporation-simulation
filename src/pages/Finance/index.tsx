@@ -51,23 +51,18 @@ export default function Finance() {
   ];
 
   const balanceSheet = [
-    { category: '流动资产', value: 5800000000 },
-    { category: '固定资产', value: 12700000000 },
-    { category: '总资产', value: finance.assets },
+    { category: '流动资产', value: finance?.currentAssets || 0 },
+    { category: '固定资产', value: finance?.fixedAssets || 0 },
+    { category: '总资产', value: finance?.assets || 0 },
   ];
 
   const liabilities = [
-    { category: '短期负债', value: 2800000000 },
-    { category: '长期负债', value: 5400000000 },
-    { category: '总负债', value: finance.liabilities },
+    { category: '短期负债', value: finance?.shortTermDebt || 0 },
+    { category: '长期负债', value: finance?.longTermDebt || 0 },
+    { category: '总负债', value: finance?.liabilities || 0 },
   ];
 
-  const cashFlowSummary = [
-    { category: '经营活动', value: 1500000000, inflow: true },
-    { category: '投资活动', value: -800000000, inflow: false },
-    { category: '筹资活动', value: -300000000, inflow: false },
-    { category: '净现金流', value: 400000000, inflow: true },
-  ];
+  const cashFlowSummary = [];
 
   const incomeItems = (cashFlow || []).filter(item => item.type === 'income');
   const expenseItems = (cashFlow || []).filter(item => item.type === 'expense');

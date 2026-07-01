@@ -50,12 +50,12 @@ export default function ChartPanel({ type }: ChartPanelProps) {
   return (
     <div className="bg-white/5 rounded-xl p-6">
       <h3 className="text-white font-medium mb-4">{title}</h3>
-      <ResponsiveContainer width="100%" height={200}>
+      <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
             data={data}
             cx="50%"
-            cy="50%"
+            cy="45%"
             innerRadius={40}
             outerRadius={80}
             paddingAngle={2}
@@ -67,13 +67,17 @@ export default function ChartPanel({ type }: ChartPanelProps) {
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip 
+          <Tooltip
             formatter={(value: number) => `${value.toLocaleString()}元`}
             contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
             itemStyle={{ color: '#f8fafc' }}
           />
-          <Legend 
-            formatter={(value) => <span className="text-text-secondary">{value}</span>}
+          <Legend
+            layout="vertical"
+            align="right"
+            verticalAlign="middle"
+            iconSize={10}
+            formatter={(value) => <span className="text-text-secondary text-xs">{value.length > 8 ? `${value.slice(0, 8)}...` : value}</span>}
           />
         </PieChart>
       </ResponsiveContainer>

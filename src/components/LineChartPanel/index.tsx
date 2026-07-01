@@ -56,19 +56,19 @@ export default function LineChartPanel({ type }: LineChartPanelProps) {
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
           <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
           <YAxis stroke="#64748b" fontSize={12} />
-          <Tooltip 
+          <Tooltip
             contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
             itemStyle={{ color: '#f8fafc' }}
             formatter={(value: number) => value.toLocaleString()}
           />
           <Legend formatter={(value) => <span className="text-text-secondary">{value}</span>} />
           {lines.map((line) => (
-            <Line 
+            <Line
               key={line.dataKey}
-              type="monotone" 
-              dataKey={line.dataKey} 
+              type="monotone"
+              dataKey={line.dataKey}
               name={line.name}
-              stroke={line.color} 
+              stroke={line.color}
               strokeWidth={2}
               dot={{ fill: line.color, strokeWidth: 2 }}
             />

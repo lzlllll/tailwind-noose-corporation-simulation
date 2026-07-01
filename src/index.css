@@ -1,4 +1,4 @@
-﻿﻿﻿@tailwind base;
+﻿﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -20,43 +20,43 @@ body {
   .glass-card {
     @apply bg-secondary/60 backdrop-blur-lg border border-white/10 rounded-xl;
   }
-  
+
   .btn-primary {
     @apply px-4 py-2 bg-accent-gold text-primary font-semibold rounded-lg hover:bg-accent-gold/80 transition-all duration-200 shadow-lg hover:shadow-accent-gold/25;
   }
-  
+
   .btn-secondary {
     @apply px-4 py-2 bg-tertiary text-white font-medium rounded-lg hover:bg-tertiary/80 transition-all duration-200;
   }
-  
+
   .btn-outline {
     @apply px-4 py-2 border border-accent-gold text-accent-gold font-medium rounded-lg hover:bg-accent-gold/10 transition-all duration-200;
   }
-  
+
   .progress-bar {
     @apply h-2 bg-white/10 rounded-full overflow-hidden;
   }
-  
+
   .progress-fill {
     @apply h-full bg-gradient-to-r from-accent-green to-accent-blue rounded-full transition-all duration-500;
   }
-  
+
   .nav-item {
     @apply flex items-center gap-3 px-4 py-3 text-text-secondary hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 cursor-pointer;
   }
-  
+
   .nav-item.active {
     @apply bg-accent-gold/10 text-accent-gold border-l-2 border-accent-gold;
   }
-  
+
   .stat-card {
     @apply glass-card p-6 hover:scale-[1.02] transition-transform duration-300;
   }
-  
+
   .modal-overlay {
     @apply fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in;
   }
-  
+
   .modal-content {
     @apply bg-secondary border border-white/10 rounded-xl p-6 w-full max-w-lg animate-scale-in;
   }
@@ -91,6 +91,7 @@ body {
       transform: translateX(100%);
       opacity: 0;
     }
+
     to {
       transform: translateX(0);
       opacity: 1;
