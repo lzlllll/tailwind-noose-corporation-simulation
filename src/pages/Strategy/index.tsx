@@ -1,6 +1,6 @@
 import { useGameStore } from '@/stores/gameStore';
 import { Target, TrendingUp, CheckCircle2, Clock, User, BarChart3 } from 'lucide-react';
-import { safeToFixed, formatPercent } from '@/lib/utils';
+import { safeToFixed, formatPercent, asArray } from '@/lib/utils';
 
 const strategyTypeMap: Record<string, string> = {
   'market-expansion': '市场扩张',
@@ -132,14 +132,14 @@ export default function Strategy() {
                       <Target size={14} />
                       目标数量
                     </div>
-                    <p className="text-sm text-white">{strategy.objectives.length} 个</p>
+                    <p className="text-sm text-white">{asArray<string>(strategy.objectives).length} 个</p>
                   </div>
                 </div>
 
                 <div className="mt-4">
                   <p className="text-sm text-text-secondary mb-2">战略目标</p>
                   <div className="flex flex-wrap gap-2">
-                    {strategy.objectives.map((obj, idx) => (
+                    {asArray<string>(strategy.objectives).map((obj, idx) => (
                       <span key={idx} className="px-3 py-1 text-xs bg-accent-gold/10 text-accent-gold rounded-full">
                         {obj}
                       </span>
@@ -150,7 +150,7 @@ export default function Strategy() {
                 <div className="mt-4 pt-4 border-t border-white/10">
                   <p className="text-sm text-text-secondary mb-3">关键指标</p>
                   <div className="grid grid-cols-3 gap-3">
-                    {strategy.keyMetrics.map((metric, idx) => (
+                    {asArray<{ name: string; target: number; current: number }>(strategy.keyMetrics).map((metric, idx) => (
                       <div key={idx} className="bg-white/5 rounded-lg p-3">
                         <p className="text-xs text-text-secondary mb-1">{metric.name}</p>
                         <div className="flex items-center justify-between">

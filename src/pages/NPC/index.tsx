@@ -4,6 +4,7 @@ import Card from '@/components/Card';
 import { useGameStore } from '@/stores/gameStore';
 import { generateNPCResponse, NPCChatResponse } from '@/services/aiService';
 import { NPCMessage } from '@/data/mockData';
+import { asArray } from '@/lib/utils';
 
 const relationshipLevels = [
   { min: 0, max: 20, label: '敌对', color: 'bg-status-danger' },
@@ -45,7 +46,7 @@ export default function NPC() {
   const activeNPC = (npcs || []).find(n => n.id === activeNPCId);
 
   const unreadCount = activeNPC
-    ? (activeNPC.chatHistory || []).filter(m => m.sender === 'npc' && !m.isRead).length
+    ? asArray<NPCMessage>(activeNPC.chatHistory).filter(m => m.sender === 'npc' && !m.isRead).length
     : 0;
 
   useEffect(() => {
@@ -72,10 +73,11 @@ export default function NPC() {
 
     const npc = (npcs || []).find(n => n.id === npcId);
     if (npc) {
-      const unreadMessages = (npc.chatHistory || []).filter(m => m.sender === 'npc' && !m.isRead);
+      const chatHistory = asArray<NPCMessage>(npc.chatHistory);
+      const unreadMessages = chatHistory.filter(m => m.sender === 'npc' && !m.isRead);
       if (unreadMessages.length > 0) {
         updateNPC(npcId, {
-          chatHistory: (npc.chatHistory || []).map(m =>
+          chatHistory: chatHistory.map(m =>
             m.sender === 'npc' && !m.isRead ? { ...m, isRead: true } : m
           ),
         });
@@ -181,7 +183,7 @@ export default function NPC() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {(npcs || []).map((npc) => {
                 const relLevel = getRelationshipLevel(npc.relationship);
-                const npcUnread = (npc.chatHistory || []).filter(m => m.sender === 'npc' && !m.isRead).length;
+                const npcUnread = asArray<NPCMessage>(npc.chatHistory).filter(m => m.sender === 'npc' && !m.isRead).length;
                 const hasPendingReply = npc.pendingReply && !parseTime(gameTime, npc.pendingReply.replyAfterTime);
 
                 return (
@@ -241,10 +243,10 @@ export default function NPC() {
                         <span className="text-text-muted text-xs">专长: {npc.specialty}</span>
                       </div>
                       <p className="text-text-secondary text-xs mt-1">性格: {npc.personality}</p>
-                      {npc.memory.length > 0 && (
+                      {asArray<string>(npc.memory).length > 0 && (
                         <div className="mt-2 flex items-center gap-1">
                           <MessageCircle className="text-accent-blue" size={12} />
-                          <span className="text-text-muted text-xs">记忆 {npc.memory.length} 条</span>
+                          <span className="text-text-muted text-xs">记忆 {asArray<string>(npc.memory).length} 条</span>
                         </div>
                       )}
                     </div>
@@ -276,7 +278,7 @@ export default function NPC() {
                 )}
 
                 <div className="h-64 overflow-y-auto space-y-4 mb-4 scrollbar-thin">
-                  {(activeNPC.chatHistory || []).length === 0 ? (
+                  {asArray<NPCMessage>(activeNPC.chatHistory).length === 0 ? (
                     <div className="text-center py-12">
                       <MessageCircle className="mx-auto text-text-muted mb-4" size={32} />
                       <p className="text-text-secondary text-sm">
@@ -287,7 +289,7 @@ export default function NPC() {
                       )}
                     </div>
                   ) : (
-                    (activeNPC.chatHistory || []).map((msg) => (
+                    asArray<NPCMessage>(activeNPC.chatHistory).map((msg) => (
                       <div
                         key={msg.id}
                         className={`flex ${msg.sender === 'player' ? 'justify-end' : 'justify-start'}`}

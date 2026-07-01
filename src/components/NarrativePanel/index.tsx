@@ -4,6 +4,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { generateNarrative, generateInitialGameData, DataOperation } from '@/services/aiService';
 import { ExternalNews, Competitor, OperationTask, InnovationProject, PlayerInfo } from '@/data/mockData';
 import { checkMonthChange, generateMonthlyCashFlow } from '@/services/calculationService';
+import { asArray } from '@/lib/utils';
 
 function calculateDerivedData(store: ReturnType<typeof useGameStore.getState>) {
   const finance = store.finance;
@@ -70,43 +71,43 @@ function applyDataOperations(operations: DataOperation[]) {
         break;
       case 'add':
         if (op.target === 'products') {
-          const newProducts = [...store.products, ...(op.data as Record<string, unknown>[])];
+          const newProducts = [...store.products, ...asArray<any>(op.data)];
           store.setProducts(newProducts as any);
         } else if (op.target === 'employees') {
-          const newEmployees = [...store.employees, ...(op.data as Record<string, unknown>[])];
+          const newEmployees = [...store.employees, ...asArray<any>(op.data)];
           store.setEmployees(newEmployees as any);
         } else if (op.target === 'strategies') {
-          const newStrategies = [...store.strategies, ...(op.data as Record<string, unknown>[])];
+          const newStrategies = [...store.strategies, ...asArray<any>(op.data)];
           store.setStrategies(newStrategies as any);
         } else if (op.target === 'news') {
-          const newNews = [...store.news, ...(op.data as ExternalNews[])];
+          const newNews = [...store.news, ...asArray<ExternalNews>(op.data)];
           store.setNews(newNews);
         } else if (op.target === 'competitors') {
-          const newCompetitors = [...store.competitors, ...(op.data as Competitor[])];
+          const newCompetitors = [...store.competitors, ...asArray<Competitor>(op.data)];
           store.setCompetitors(newCompetitors);
         } else if (op.target === 'operations') {
-          const newOperations = [...store.operations, ...(op.data as OperationTask[])];
+          const newOperations = [...store.operations, ...asArray<OperationTask>(op.data)];
           store.setOperations(newOperations);
         } else if (op.target === 'innovations') {
-          const newInnovations = [...store.innovations, ...(op.data as InnovationProject[])];
+          const newInnovations = [...store.innovations, ...asArray<InnovationProject>(op.data)];
           store.setInnovations(newInnovations);
         }
         break;
       case 'delete':
         if (op.target === 'products') {
-          const productIds = op.data as string[];
+          const productIds = asArray<string>(op.data);
           const filteredProducts = store.products.filter((p) => !productIds.includes(p.id));
           store.setProducts(filteredProducts);
         } else if (op.target === 'employees') {
-          const employeeIds = op.data as string[];
+          const employeeIds = asArray<string>(op.data);
           const filteredEmployees = store.employees.filter((e) => !employeeIds.includes(e.id));
           store.setEmployees(filteredEmployees);
         } else if (op.target === 'news') {
-          const newsIds = op.data as string[];
+          const newsIds = asArray<string>(op.data);
           const filteredNews = store.news.filter((n) => !newsIds.includes(n.id));
           store.setNews(filteredNews);
         } else if (op.target === 'operations') {
-          const operationIds = op.data as string[];
+          const operationIds = asArray<string>(op.data);
           const filteredOperations = store.operations.filter((o) => !operationIds.includes(o.id));
           store.setOperations(filteredOperations);
         }

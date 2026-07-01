@@ -1,6 +1,7 @@
 import { useGameStore } from '@/stores/gameStore';
 import { SYSTEM_PROMPT } from './systemPrompt';
-import { NPC } from '@/data/mockData';
+import { NPC, NPCMessage } from '@/data/mockData';
+import { asArray } from '@/lib/utils';
 
 function parsePKVValue(raw: string): any {
   const val = raw.trim();
@@ -514,10 +515,10 @@ ${npc.systemPrompt}
 - 与玩家关系：${npc.relationship >= 80 ? '亲密' : npc.relationship >= 60 ? '友好' : npc.relationship >= 40 ? '中立' : npc.relationship >= 20 ? '冷淡' : '敌对'}
 
 【记忆】
-${npc.isFirstMeeting ? '这是第一次见面，还没有建立任何记忆。' : (npc.memory || []).length > 0 ? (npc.memory || []).map(m => `- ${m}`).join('\n') : '暂无特殊记忆。'}
+${npc.isFirstMeeting ? '这是第一次见面，还没有建立任何记忆。' : asArray<string>(npc.memory).length > 0 ? asArray<string>(npc.memory).map(m => `- ${m}`).join('\n') : '暂无特殊记忆。'}
 
 【对话历史】
-${(npc.chatHistory || []).length > 0 ? (npc.chatHistory || []).slice(-5).map(msg => `${msg.sender === 'player' ? '玩家' : npc.name}: ${msg.content}`).join('\n') : '无历史对话'}
+${asArray<NPCMessage>(npc.chatHistory).length > 0 ? asArray<NPCMessage>(npc.chatHistory).slice(-5).map(msg => `${msg.sender === 'player' ? '玩家' : npc.name}: ${msg.content}`).join('\n') : '无历史对话'}
 
 【回复行为规则】
 根据你的性格和立场，你可以选择以下回复方式：
@@ -572,8 +573,9 @@ NPC承诺：[PROMISE]NPC做出的承诺内容[/PROMISE]
 
     if (memoryMatch) {
       const memoryContent = memoryMatch[1].trim();
-      if (!npc.memory.includes(memoryContent)) {
-        newMemory = [...npc.memory, memoryContent];
+      const currentMemory = asArray<string>(npc.memory);
+      if (!currentMemory.includes(memoryContent)) {
+        newMemory = [...currentMemory, memoryContent];
       }
     }
 

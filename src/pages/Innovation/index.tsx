@@ -2,7 +2,7 @@ import { Lightbulb, Calendar, Users, TrendingUp, Plus, Rocket, Target, Award, Al
 import Card from '@/components/Card';
 import StatCard from '@/components/StatCard';
 import { useGameStore } from '@/stores/gameStore';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, asArray } from '@/lib/utils';
 
 const categoryColors = {
   '前沿技术': { bg: 'bg-accent-purple/20', text: 'text-accent-purple' },
@@ -87,7 +87,7 @@ export default function Innovation() {
                       </span>
                       <span className="flex items-center gap-1">
                         <Users size={14} />
-                        {project.team.length}人
+                        {asArray(project.team).length}人
                       </span>
                     </div>
                   </div>

@@ -205,44 +205,82 @@ export const useGameStore = create<GameStore>()(
       },
 
       setCurrentPage: (page) => set({ currentPage: page }),
-      setCompany: (company) => set({ company }),
-      setProducts: (products) => set({ products: products || [] }),
-      setEmployees: (employees) => set({ employees: employees || [] }),
+      setCompany: (company) => set({
+        company: company ? {
+          ...company,
+          shareholdings: asArray<Shareholding>(company.shareholdings),
+        } : company
+      }),
+      setProducts: (products) => set({ products: asArray<Product>(products) }),
+      setEmployees: (employees) => set({ employees: asArray<Employee>(employees) }),
       setFinance: (finance) => set({ finance }),
-      setFinanceHistory: (financeHistory) => set({ financeHistory: financeHistory || [] }),
-      setNPCs: (npcs) => set({ npcs: npcs || [] }),
+      setFinanceHistory: (financeHistory) => set({ financeHistory: asArray(financeHistory) }),
+      setNPCs: (npcs) => set({
+        npcs: asArray<NPC>(npcs).map((npc) => ({
+          ...npc,
+          chatHistory: asArray<NPCMessage>(npc.chatHistory),
+          memory: asArray<string>(npc.memory),
+        }))
+      }),
       updateNPC: (npcId, updates) => set((state) => ({
         npcs: state.npcs.map((npc) =>
-          npc.id === npcId ? { ...npc, ...updates } : npc
+          npc.id === npcId
+            ? {
+              ...npc,
+              ...updates,
+              chatHistory: updates.chatHistory !== undefined
+                ? asArray<NPCMessage>(updates.chatHistory)
+                : npc.chatHistory,
+              memory: updates.memory !== undefined
+                ? asArray<string>(updates.memory)
+                : npc.memory,
+            }
+            : npc
         ),
       })),
       addNPCMessage: (npcId, message) => set((state) => ({
         npcs: state.npcs.map((npc) =>
           npc.id === npcId
-            ? { ...npc, chatHistory: [...(npc.chatHistory || []), message] }
+            ? { ...npc, chatHistory: [...asArray<NPCMessage>(npc.chatHistory), message] }
             : npc
         ),
       })),
-      setOperations: (operations) => set({ operations: operations || [] }),
-      setInnovations: (innovations) => set({ innovations: innovations || [] }),
-      setNews: (news) => set({ news: news || [] }),
-      setCompetitors: (competitors) => set({ competitors: competitors || [] }),
-      setSuppliers: (suppliers) => set({ suppliers: suppliers || [] }),
-      setShareholdings: (shareholdings) => set({ shareholdings: shareholdings || [] }),
-      setDepartmentsData: (departmentsData) => set({ departmentsData: departmentsData || [] }),
-      setBusinessLines: (businessLines) => set({ businessLines: businessLines || [] }),
-      setMarkets: (markets) => set({ markets: markets || [] }),
-      setInventory: (inventory) => set({ inventory: inventory || [] }),
-      setFactories: (factories) => set({ factories: factories || [] }),
-      setSupplyChain: (supplyChain) => set({ supplyChain: supplyChain || [] }),
-      setLogistics: (logistics) => set({ logistics: logistics || [] }),
-      setSubsidiaries: (subsidiaries) => set({ subsidiaries: subsidiaries || [] }),
-      setCashFlow: (cashFlow) => set({ cashFlow: cashFlow || [] }),
-      setStrategies: (strategies) => set({ strategies: strategies || [] }),
+      setOperations: (operations) => set({ operations: asArray<OperationTask>(operations) }),
+      setInnovations: (innovations) => set({
+        innovations: asArray<InnovationProject>(innovations).map((inn) => ({
+          ...inn,
+          team: asArray<string>(inn.team),
+        }))
+      }),
+      setNews: (news) => set({ news: asArray<ExternalNews>(news) }),
+      setCompetitors: (competitors) => set({ competitors: asArray<Competitor>(competitors) }),
+      setSuppliers: (suppliers) => set({ suppliers: asArray<Supplier>(suppliers) }),
+      setShareholdings: (shareholdings) => set({ shareholdings: asArray<Shareholding>(shareholdings) }),
+      setDepartmentsData: (departmentsData) => set({ departmentsData: asArray(departmentsData) }),
+      setBusinessLines: (businessLines) => set({
+        businessLines: asArray<BusinessLine>(businessLines).map((bl) => ({
+          ...bl,
+          products: asArray<string>(bl.products),
+        }))
+      }),
+      setMarkets: (markets) => set({ markets: asArray<Market>(markets) }),
+      setInventory: (inventory) => set({ inventory: asArray<Inventory>(inventory) }),
+      setFactories: (factories) => set({ factories: asArray<Factory>(factories) }),
+      setSupplyChain: (supplyChain) => set({ supplyChain: asArray<SupplyChain>(supplyChain) }),
+      setLogistics: (logistics) => set({ logistics: asArray<Logistics>(logistics) }),
+      setSubsidiaries: (subsidiaries) => set({ subsidiaries: asArray<Subsidiary>(subsidiaries) }),
+      setCashFlow: (cashFlow) => set({ cashFlow: asArray<CashFlowItem>(cashFlow) }),
+      setStrategies: (strategies) => set({
+        strategies: asArray<Strategy>(strategies).map((s) => ({
+          ...s,
+          objectives: asArray<string>(s.objectives),
+          keyMetrics: asArray(s.keyMetrics),
+        }))
+      }),
       setAISettings: (aiSettings) => set({ aiSettings }),
       setTimeSettings: (timeSettings) => set({ timeSettings }),
       addChatMessage: (message) => set((state) => ({ chatMessages: [...state.chatMessages, message] })),
-      setChatMessages: (chatMessages) => set({ chatMessages: chatMessages || [] }),
+      setChatMessages: (chatMessages) => set({ chatMessages: asArray<ChatMessage>(chatMessages) }),
       addNPCChatSummary: (summary) => set((state) => ({ npcChatSummaries: [...state.npcChatSummaries, summary] })),
       setIsAIProcessing: (isAIProcessing) => set({ isAIProcessing }),
       setNarrativeText: (narrativeText) => set({ narrativeText }),
@@ -416,28 +454,45 @@ export const useGameStore = create<GameStore>()(
           const data = parsed.data;
           set({
             currentPage: data.currentPage || '/',
-            company: data.company || null,
-            products: data.products || [],
-            employees: data.employees || [],
+            company: data.company ? {
+              ...data.company,
+              shareholdings: asArray<Shareholding>(data.company.shareholdings),
+            } : null,
+            products: asArray<Product>(data.products),
+            employees: asArray<Employee>(data.employees),
             finance: data.finance || null,
-            financeHistory: data.financeHistory || [],
-            npcs: data.npcs || [],
-            operations: data.operations || [],
-            innovations: data.innovations || [],
-            news: data.news || [],
-            competitors: data.competitors || [],
-            suppliers: data.suppliers || [],
-            shareholdings: data.shareholdings || [],
-            departmentsData: data.departmentsData || [],
-            businessLines: data.businessLines || [],
-            markets: data.markets || [],
-            inventory: data.inventory || [],
-            factories: data.factories || [],
-            supplyChain: data.supplyChain || [],
-            logistics: data.logistics || [],
-            subsidiaries: data.subsidiaries || [],
-            cashFlow: data.cashFlow || [],
-            strategies: data.strategies || [],
+            financeHistory: asArray(data.financeHistory),
+            npcs: asArray<NPC>(data.npcs).map((npc: NPC) => ({
+              ...npc,
+              chatHistory: asArray<NPCMessage>(npc.chatHistory),
+              memory: asArray<string>(npc.memory),
+            })),
+            operations: asArray<OperationTask>(data.operations),
+            innovations: asArray<InnovationProject>(data.innovations).map((inn: InnovationProject) => ({
+              ...inn,
+              team: asArray<string>(inn.team),
+            })),
+            news: asArray<ExternalNews>(data.news),
+            competitors: asArray<Competitor>(data.competitors),
+            suppliers: asArray<Supplier>(data.suppliers),
+            shareholdings: asArray<Shareholding>(data.shareholdings),
+            departmentsData: asArray(data.departmentsData),
+            businessLines: asArray<BusinessLine>(data.businessLines).map((bl: BusinessLine) => ({
+              ...bl,
+              products: asArray<string>(bl.products),
+            })),
+            markets: asArray<Market>(data.markets),
+            inventory: asArray<Inventory>(data.inventory),
+            factories: asArray<Factory>(data.factories),
+            supplyChain: asArray<SupplyChain>(data.supplyChain),
+            logistics: asArray<Logistics>(data.logistics),
+            subsidiaries: asArray<Subsidiary>(data.subsidiaries),
+            cashFlow: asArray<CashFlowItem>(data.cashFlow),
+            strategies: asArray<Strategy>(data.strategies).map((s: Strategy) => ({
+              ...s,
+              objectives: asArray<string>(s.objectives),
+              keyMetrics: asArray(s.keyMetrics),
+            })),
             aiSettings: data.aiSettings || {
               apiKey: '',
               flashModel: 'gpt-4o-mini',
@@ -448,8 +503,8 @@ export const useGameStore = create<GameStore>()(
               timezone: 8,
               timezoneName: '东八区 (UTC+8)',
             },
-            chatMessages: data.chatMessages || [],
-            npcChatSummaries: data.npcChatSummaries || [],
+            chatMessages: asArray(data.chatMessages),
+            npcChatSummaries: asArray(data.npcChatSummaries),
             narrativeText: data.narrativeText || '',
             gameTime: data.gameTime || '',
             previousGameTime: data.previousGameTime || '',

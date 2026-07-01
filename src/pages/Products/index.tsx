@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Package, TrendingUp, Target, Clock, Plus, Search, Filter, Eye, BarChart2, ShoppingCart, Warehouse } from 'lucide-react';
 import Card from '@/components/Card';
 import { useGameStore } from '@/stores/gameStore';
-import { formatCurrency, safeToFixed } from '@/lib/utils';
+import { formatCurrency, safeToFixed, asArray } from '@/lib/utils';
 
 const statusColors = {
   development: { bg: 'bg-accent-blue/20', text: 'text-accent-blue', label: '开发中' },
@@ -181,7 +181,7 @@ export default function Products() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {line.products.map((product, idx) => (
+            {asArray<string>(line.products).map((product, idx) => (
               <span key={idx} className="px-3 py-1 text-xs bg-white/10 rounded-full text-text-secondary">
                 {product}
               </span>
