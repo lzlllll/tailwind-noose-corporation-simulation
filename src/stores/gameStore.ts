@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { asArray } from '@/lib/utils';
 import {
   Company,
   Product,
@@ -252,7 +253,13 @@ export const useGameStore = create<GameStore>()(
       setIsDataGenerated: (isDataGenerated) => set({ isDataGenerated }),
       openModal: (content) => set({ modalOpen: true, modalContent: content }),
       closeModal: () => set({ modalOpen: false, modalContent: '' }),
-      setPlayerInfo: (playerInfo) => set({ playerInfo }),
+      setPlayerInfo: (playerInfo) => set({
+        playerInfo: {
+          ...playerInfo,
+          personalAssets: asArray<PersonalAsset>(playerInfo.personalAssets),
+          stockHoldings: asArray<StockHolding>(playerInfo.stockHoldings),
+        }
+      }),
       updatePersonalCash: (amount) => set((state) => {
         if (!state.playerInfo) return state;
         return {
@@ -268,7 +275,7 @@ export const useGameStore = create<GameStore>()(
         return {
           playerInfo: {
             ...state.playerInfo,
-            stockHoldings: [...state.playerInfo.stockHoldings, holding],
+            stockHoldings: [...asArray<StockHolding>(state.playerInfo.stockHoldings), holding],
           }
         };
       }),
@@ -277,7 +284,7 @@ export const useGameStore = create<GameStore>()(
         return {
           playerInfo: {
             ...state.playerInfo,
-            stockHoldings: (state.playerInfo.stockHoldings || []).map(h =>
+            stockHoldings: asArray<StockHolding>(state.playerInfo.stockHoldings).map(h =>
               h.id === id ? { ...h, ...updates } : h
             ),
           }
@@ -288,7 +295,7 @@ export const useGameStore = create<GameStore>()(
         return {
           playerInfo: {
             ...state.playerInfo,
-            stockHoldings: (state.playerInfo.stockHoldings || []).filter(h => h.id !== id),
+            stockHoldings: asArray<StockHolding>(state.playerInfo.stockHoldings).filter(h => h.id !== id),
           }
         };
       }),
@@ -297,7 +304,7 @@ export const useGameStore = create<GameStore>()(
         return {
           playerInfo: {
             ...state.playerInfo,
-            personalAssets: [...(state.playerInfo.personalAssets || []), asset],
+            personalAssets: [...asArray<PersonalAsset>(state.playerInfo.personalAssets), asset],
             totalAssets: state.playerInfo.totalAssets + asset.value,
             netWorth: state.playerInfo.netWorth + asset.value,
           }
@@ -305,12 +312,12 @@ export const useGameStore = create<GameStore>()(
       }),
       removePersonalAsset: (id) => set((state) => {
         if (!state.playerInfo) return state;
-        const asset = (state.playerInfo.personalAssets || []).find(a => a.id === id);
+        const asset = asArray<PersonalAsset>(state.playerInfo.personalAssets).find(a => a.id === id);
         if (!asset) return state;
         return {
           playerInfo: {
             ...state.playerInfo,
-            personalAssets: (state.playerInfo.personalAssets || []).filter(a => a.id !== id),
+            personalAssets: asArray<PersonalAsset>(state.playerInfo.personalAssets).filter(a => a.id !== id),
             totalAssets: state.playerInfo.totalAssets - asset.value,
             netWorth: state.playerInfo.netWorth - asset.value,
           }
@@ -447,7 +454,11 @@ export const useGameStore = create<GameStore>()(
             gameTime: data.gameTime || '',
             previousGameTime: data.previousGameTime || '',
             isDataGenerated: data.isDataGenerated || false,
-            playerInfo: data.playerInfo || null,
+            playerInfo: data.playerInfo ? {
+              ...data.playerInfo,
+              personalAssets: asArray<PersonalAsset>(data.playerInfo.personalAssets),
+              stockHoldings: asArray<StockHolding>(data.playerInfo.stockHoldings),
+            } : null,
             gameStarted: data.gameStarted !== undefined ? data.gameStarted : true,
             contextSummary: data.contextSummary || '',
           });

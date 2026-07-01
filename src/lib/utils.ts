@@ -32,3 +32,13 @@ export function formatPercent(value: number | undefined | null, decimals: number
   }
   return value.toFixed(decimals) + '%';
 }
+
+export function asArray<T>(value: T[] | null | undefined | any): T[] {
+  if (Array.isArray(value)) {
+    return value as T[];
+  }
+  if (value === null || value === undefined) {
+    return [] as T[];
+  }
+  return [] as T[];
+}

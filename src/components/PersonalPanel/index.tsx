@@ -1,6 +1,7 @@
 import { X, Wallet, Building, TrendingUp, Home, Car, PiggyBank, Briefcase } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
-import { formatCurrency, safeToFixed } from '@/lib/utils';
+import { formatCurrency, safeToFixed, asArray } from '@/lib/utils';
+import { PersonalAsset, StockHolding } from '@/data/mockData';
 
 const assetTypeIcons = {
   real_estate: Home,
@@ -71,9 +72,9 @@ export default function PersonalPanel() {
               <Building className="w-4 h-4 text-accent-gold" />
               个人资产
             </h3>
-            {(playerInfo.personalAssets || []).length > 0 ? (
+            {asArray<PersonalAsset>(playerInfo.personalAssets).length > 0 ? (
               <div className="space-y-2">
-                {(playerInfo.personalAssets || []).map(asset => {
+                {asArray<PersonalAsset>(playerInfo.personalAssets).map(asset => {
                   const Icon = assetTypeIcons[asset.type];
                   return (
                     <div key={asset.id} className="glass-card p-3 rounded-lg flex items-center justify-between">
@@ -104,9 +105,9 @@ export default function PersonalPanel() {
               <TrendingUp className="w-4 h-4 text-accent-gold" />
               股票持仓
             </h3>
-            {(playerInfo.stockHoldings || []).length > 0 ? (
+            {asArray<StockHolding>(playerInfo.stockHoldings).length > 0 ? (
               <div className="space-y-2">
-                {(playerInfo.stockHoldings || []).map(holding => {
+                {asArray<StockHolding>(playerInfo.stockHoldings).map(holding => {
                   const profitColor = holding.profitLoss >= 0 ? 'text-accent-green' : 'text-red-400';
                   return (
                     <div key={holding.id} className="glass-card p-3 rounded-lg">
