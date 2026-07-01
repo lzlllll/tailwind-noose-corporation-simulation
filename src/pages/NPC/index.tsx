@@ -19,10 +19,10 @@ function getRelationshipLevel(value: number) {
 
 function parseTime(gameTime: string, replyAfterTime: string | undefined): boolean {
   if (!replyAfterTime) return true;
-  
+
   const current = new Date(gameTime);
   const replyTime = new Date(replyAfterTime);
-  
+
   return current >= replyTime;
 }
 
@@ -44,8 +44,8 @@ export default function NPC() {
 
   const activeNPC = npcs.find(n => n.id === activeNPCId);
 
-  const unreadCount = activeNPC 
-    ? activeNPC.chatHistory.filter(m => m.sender === 'npc' && !m.isRead).length 
+  const unreadCount = activeNPC
+    ? (activeNPC.chatHistory || []).filter(m => m.sender === 'npc' && !m.isRead).length
     : 0;
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function NPC() {
         timestamp: new Date().toLocaleString('zh-CN'),
         isRead: false,
       };
-      
+
       addNPCMessage(activeNPC.id, npcMessage);
       updateNPC(activeNPC.id, { pendingReply: undefined });
     }
@@ -69,13 +69,13 @@ export default function NPC() {
 
   const handleSelectNPC = (npcId: string) => {
     setActiveNPCId(npcId);
-    
+
     const npc = npcs.find(n => n.id === npcId);
     if (npc) {
-      const unreadMessages = npc.chatHistory.filter(m => m.sender === 'npc' && !m.isRead);
+      const unreadMessages = (npc.chatHistory || []).filter(m => m.sender === 'npc' && !m.isRead);
       if (unreadMessages.length > 0) {
         updateNPC(npcId, {
-          chatHistory: npc.chatHistory.map(m => 
+          chatHistory: (npc.chatHistory || []).map(m =>
             m.sender === 'npc' && !m.isRead ? { ...m, isRead: true } : m
           ),
         });
@@ -108,7 +108,7 @@ export default function NPC() {
             replyAfterTime: response.replyAfterTime,
           },
         });
-        
+
         const delayMessage: NPCMessage = {
           id: (Date.now() + 1).toString(),
           sender: 'npc',
@@ -181,18 +181,17 @@ export default function NPC() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {npcs.map((npc) => {
                 const relLevel = getRelationshipLevel(npc.relationship);
-                const npcUnread = npc.chatHistory.filter(m => m.sender === 'npc' && !m.isRead).length;
+                const npcUnread = (npc.chatHistory || []).filter(m => m.sender === 'npc' && !m.isRead).length;
                 const hasPendingReply = npc.pendingReply && !parseTime(gameTime, npc.pendingReply.replyAfterTime);
-                
+
                 return (
                   <div
                     key={npc.id}
                     onClick={() => handleSelectNPC(npc.id)}
-                    className={`p-4 rounded-xl cursor-pointer transition-all ${
-                      activeNPCId === npc.id
-                        ? 'bg-white/10 border border-accent-gold/30'
-                        : 'bg-white/5 hover:bg-white/10 border border-transparent'
-                    }`}
+                    className={`p-4 rounded-xl cursor-pointer transition-all ${activeNPCId === npc.id
+                      ? 'bg-white/10 border border-accent-gold/30'
+                      : 'bg-white/5 hover:bg-white/10 border border-transparent'
+                      }`}
                   >
                     <div className="flex items-start gap-4">
                       <div className="w-14 h-14 bg-gradient-to-br from-accent-gold/20 to-accent-green/20 rounded-xl flex items-center justify-center relative">
@@ -266,7 +265,7 @@ export default function NPC() {
                     <span className="text-accent-blue text-sm">{unreadCount} 条未读消息</span>
                   </div>
                 )}
-                
+
                 {activeNPC.pendingReply && !parseTime(gameTime, activeNPC.pendingReply.replyAfterTime) && (
                   <div className="mb-4 px-3 py-2 bg-yellow-400/10 rounded-lg flex items-center gap-2">
                     <Clock className="text-yellow-400" size={16} />
@@ -275,7 +274,7 @@ export default function NPC() {
                     </span>
                   </div>
                 )}
-                
+
                 <div className="h-64 overflow-y-auto space-y-4 mb-4 scrollbar-thin">
                   {activeNPC.chatHistory.length === 0 ? (
                     <div className="text-center py-12">
@@ -293,21 +292,20 @@ export default function NPC() {
                         key={msg.id}
                         className={`flex ${msg.sender === 'player' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div className={`max-w-[80%] p-3 rounded-lg ${
-                          msg.sender === 'player'
-                            ? 'bg-accent-gold/20 text-accent-gold rounded-tr-none'
-                            : msg.content.includes('[已读不回]')
-                              ? 'bg-text-muted/10 text-text-muted rounded-tl-none'
-                              : msg.content.includes('[延迟回复]')
-                                ? 'bg-yellow-400/10 text-yellow-400 rounded-tl-none'
-                                : 'bg-white/10 text-white rounded-tl-none'
-                        }`}>
+                        <div className={`max-w-[80%] p-3 rounded-lg ${msg.sender === 'player'
+                          ? 'bg-accent-gold/20 text-accent-gold rounded-tr-none'
+                          : msg.content.includes('[已读不回]')
+                            ? 'bg-text-muted/10 text-text-muted rounded-tl-none'
+                            : msg.content.includes('[延迟回复]')
+                              ? 'bg-yellow-400/10 text-yellow-400 rounded-tl-none'
+                              : 'bg-white/10 text-white rounded-tl-none'
+                          }`}>
                           <div className="flex items-center justify-between mb-1">
                             <p className="text-xs text-text-muted">
                               {msg.sender === 'player' ? '我' : activeNPC.name} · {msg.timestamp}
                             </p>
                             {msg.sender === 'npc' && (
-                              msg.isRead 
+                              msg.isRead
                                 ? <Check className="text-accent-green" size={12} />
                                 : <AlertCircle className="text-accent-blue" size={12} />
                             )}

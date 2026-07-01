@@ -205,11 +205,11 @@ export const useGameStore = create<GameStore>()(
 
       setCurrentPage: (page) => set({ currentPage: page }),
       setCompany: (company) => set({ company }),
-      setProducts: (products) => set({ products }),
-      setEmployees: (employees) => set({ employees }),
+      setProducts: (products) => set({ products: products || [] }),
+      setEmployees: (employees) => set({ employees: employees || [] }),
       setFinance: (finance) => set({ finance }),
-      setFinanceHistory: (financeHistory) => set({ financeHistory }),
-      setNPCs: (npcs) => set({ npcs }),
+      setFinanceHistory: (financeHistory) => set({ financeHistory: financeHistory || [] }),
+      setNPCs: (npcs) => set({ npcs: npcs || [] }),
       updateNPC: (npcId, updates) => set((state) => ({
         npcs: state.npcs.map((npc) =>
           npc.id === npcId ? { ...npc, ...updates } : npc
@@ -218,30 +218,30 @@ export const useGameStore = create<GameStore>()(
       addNPCMessage: (npcId, message) => set((state) => ({
         npcs: state.npcs.map((npc) =>
           npc.id === npcId
-            ? { ...npc, chatHistory: [...npc.chatHistory, message] }
+            ? { ...npc, chatHistory: [...(npc.chatHistory || []), message] }
             : npc
         ),
       })),
-      setOperations: (operations) => set({ operations }),
-      setInnovations: (innovations) => set({ innovations }),
-      setNews: (news) => set({ news }),
-      setCompetitors: (competitors) => set({ competitors }),
-      setSuppliers: (suppliers) => set({ suppliers }),
-      setShareholdings: (shareholdings) => set({ shareholdings }),
-      setDepartmentsData: (departmentsData) => set({ departmentsData }),
-      setBusinessLines: (businessLines) => set({ businessLines }),
-      setMarkets: (markets) => set({ markets }),
-      setInventory: (inventory) => set({ inventory }),
-      setFactories: (factories) => set({ factories }),
-      setSupplyChain: (supplyChain) => set({ supplyChain }),
-      setLogistics: (logistics) => set({ logistics }),
-      setSubsidiaries: (subsidiaries) => set({ subsidiaries }),
-      setCashFlow: (cashFlow) => set({ cashFlow }),
-      setStrategies: (strategies) => set({ strategies }),
+      setOperations: (operations) => set({ operations: operations || [] }),
+      setInnovations: (innovations) => set({ innovations: innovations || [] }),
+      setNews: (news) => set({ news: news || [] }),
+      setCompetitors: (competitors) => set({ competitors: competitors || [] }),
+      setSuppliers: (suppliers) => set({ suppliers: suppliers || [] }),
+      setShareholdings: (shareholdings) => set({ shareholdings: shareholdings || [] }),
+      setDepartmentsData: (departmentsData) => set({ departmentsData: departmentsData || [] }),
+      setBusinessLines: (businessLines) => set({ businessLines: businessLines || [] }),
+      setMarkets: (markets) => set({ markets: markets || [] }),
+      setInventory: (inventory) => set({ inventory: inventory || [] }),
+      setFactories: (factories) => set({ factories: factories || [] }),
+      setSupplyChain: (supplyChain) => set({ supplyChain: supplyChain || [] }),
+      setLogistics: (logistics) => set({ logistics: logistics || [] }),
+      setSubsidiaries: (subsidiaries) => set({ subsidiaries: subsidiaries || [] }),
+      setCashFlow: (cashFlow) => set({ cashFlow: cashFlow || [] }),
+      setStrategies: (strategies) => set({ strategies: strategies || [] }),
       setAISettings: (aiSettings) => set({ aiSettings }),
       setTimeSettings: (timeSettings) => set({ timeSettings }),
       addChatMessage: (message) => set((state) => ({ chatMessages: [...state.chatMessages, message] })),
-      setChatMessages: (chatMessages) => set({ chatMessages }),
+      setChatMessages: (chatMessages) => set({ chatMessages: chatMessages || [] }),
       addNPCChatSummary: (summary) => set((state) => ({ npcChatSummaries: [...state.npcChatSummaries, summary] })),
       setIsAIProcessing: (isAIProcessing) => set({ isAIProcessing }),
       setNarrativeText: (narrativeText) => set({ narrativeText }),
@@ -277,7 +277,7 @@ export const useGameStore = create<GameStore>()(
         return {
           playerInfo: {
             ...state.playerInfo,
-            stockHoldings: state.playerInfo.stockHoldings.map(h =>
+            stockHoldings: (state.playerInfo.stockHoldings || []).map(h =>
               h.id === id ? { ...h, ...updates } : h
             ),
           }
@@ -288,7 +288,7 @@ export const useGameStore = create<GameStore>()(
         return {
           playerInfo: {
             ...state.playerInfo,
-            stockHoldings: state.playerInfo.stockHoldings.filter(h => h.id !== id),
+            stockHoldings: (state.playerInfo.stockHoldings || []).filter(h => h.id !== id),
           }
         };
       }),
@@ -297,7 +297,7 @@ export const useGameStore = create<GameStore>()(
         return {
           playerInfo: {
             ...state.playerInfo,
-            personalAssets: [...state.playerInfo.personalAssets, asset],
+            personalAssets: [...(state.playerInfo.personalAssets || []), asset],
             totalAssets: state.playerInfo.totalAssets + asset.value,
             netWorth: state.playerInfo.netWorth + asset.value,
           }
@@ -305,12 +305,12 @@ export const useGameStore = create<GameStore>()(
       }),
       removePersonalAsset: (id) => set((state) => {
         if (!state.playerInfo) return state;
-        const asset = state.playerInfo.personalAssets.find(a => a.id === id);
+        const asset = (state.playerInfo.personalAssets || []).find(a => a.id === id);
         if (!asset) return state;
         return {
           playerInfo: {
             ...state.playerInfo,
-            personalAssets: state.playerInfo.personalAssets.filter(a => a.id !== id),
+            personalAssets: (state.playerInfo.personalAssets || []).filter(a => a.id !== id),
             totalAssets: state.playerInfo.totalAssets - asset.value,
             netWorth: state.playerInfo.netWorth - asset.value,
           }
