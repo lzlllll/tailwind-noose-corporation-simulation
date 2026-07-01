@@ -176,7 +176,7 @@ export async function callFlashModel(prompt: string): Promise<string> {
         model: aiSettings.flashModel,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
-        max_tokens: 300,
+        max_tokens: 32000,
       }),
     });
 
@@ -206,7 +206,7 @@ export async function callProModel(prompt: string): Promise<string> {
         model: aiSettings.proModel,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.8,
-        max_tokens: 2000,
+        max_tokens: 32000,
       }),
     });
 
@@ -217,7 +217,7 @@ export async function callProModel(prompt: string): Promise<string> {
     }
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || '无响应';
+    return data.choices[0]?.message?.content || '';
   } catch (error) {
     console.error('Pro模型调用失败:', error);
     throw error;
@@ -560,7 +560,7 @@ NPC承诺：[PROMISE]NPC做出的承诺内容[/PROMISE]
           { role: 'user', content: `【当前时间】\n${gameTime}\n\n【玩家说的话】\n${playerMessage}` },
         ],
         temperature: 0.8,
-        max_tokens: 500,
+        max_tokens: 8000,
       }),
     });
 

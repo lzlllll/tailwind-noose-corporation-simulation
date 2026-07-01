@@ -8,20 +8,20 @@ import { checkMonthChange, generateMonthlyCashFlow } from '@/services/calculatio
 function calculateDerivedData(store: ReturnType<typeof useGameStore.getState>) {
   const finance = store.finance;
   const financeHistory = store.financeHistory;
-  
+
   if (finance) {
     const profit = finance.revenue - finance.expenses;
     const profitMargin = finance.revenue > 0 ? (profit / finance.revenue) * 100 : 0;
     const cashBalance = finance.cash + finance.investments - finance.debt;
-    
+
     const lastQuarter = financeHistory.length > 0 ? financeHistory[financeHistory.length - 1] : null;
-    const revenueGrowth = lastQuarter && lastQuarter.revenue > 0 
-      ? ((finance.revenue - lastQuarter.revenue) / lastQuarter.revenue) * 100 
+    const revenueGrowth = lastQuarter && lastQuarter.revenue > 0
+      ? ((finance.revenue - lastQuarter.revenue) / lastQuarter.revenue) * 100
       : 0;
-    const expenseGrowth = lastQuarter && lastQuarter.expenses > 0 
-      ? ((finance.expenses - lastQuarter.expenses) / lastQuarter.expenses) * 100 
+    const expenseGrowth = lastQuarter && lastQuarter.expenses > 0
+      ? ((finance.expenses - lastQuarter.expenses) / lastQuarter.expenses) * 100
       : 0;
-    
+
     store.setFinance({
       ...finance,
       profit,
@@ -31,7 +31,7 @@ function calculateDerivedData(store: ReturnType<typeof useGameStore.getState>) {
       expenseGrowth,
     });
   }
-  
+
   const company = store.company;
   if (company) {
     store.setCompany({
@@ -42,7 +42,7 @@ function calculateDerivedData(store: ReturnType<typeof useGameStore.getState>) {
 
 function applyDataOperations(operations: DataOperation[]) {
   const store = useGameStore.getState();
-  
+
   operations.forEach((op) => {
     switch (op.type) {
       case 'modify':
@@ -58,8 +58,8 @@ function applyDataOperations(operations: DataOperation[]) {
         } else if (op.target === 'playerInfo' && store.playerInfo) {
           const updates = op.data as Record<string, unknown>;
           if (updates.personalCash !== undefined) {
-            const cashChange = typeof updates.personalCash === 'number' 
-              ? updates.personalCash - store.playerInfo.personalCash 
+            const cashChange = typeof updates.personalCash === 'number'
+              ? updates.personalCash - store.playerInfo.personalCash
               : 0;
             if (cashChange !== 0) {
               store.updatePersonalCash(cashChange);
@@ -113,7 +113,7 @@ function applyDataOperations(operations: DataOperation[]) {
         break;
     }
   });
-  
+
   calculateDerivedData(store);
 }
 
@@ -255,12 +255,12 @@ export default function NarrativePanel() {
       if (response.newTime) {
         const previousTime = gameTime;
         setGameTime(response.newTime);
-        
+
         if (checkMonthChange(response.newTime, previousTime)) {
           generateMonthlyCashFlow();
           console.log('过月了，已更新现金流数据');
         }
-        
+
         setIsDataGenerated(true);
       }
 
@@ -497,11 +497,10 @@ export default function NarrativePanel() {
                 className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    message.role === 'user'
-                      ? 'bg-accent-blue/20'
-                      : 'bg-accent-green/20'
-                  }`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.role === 'user'
+                    ? 'bg-accent-blue/20'
+                    : 'bg-accent-green/20'
+                    }`}
                 >
                   {message.role === 'user' ? (
                     <User className="text-accent-blue" size={16} />
@@ -510,16 +509,14 @@ export default function NarrativePanel() {
                   )}
                 </div>
                 <div
-                  className={`max-w-[85%] ${
-                    message.role === 'user' ? 'text-right' : ''
-                  }`}
+                  className={`max-w-[85%] ${message.role === 'user' ? 'text-right' : ''
+                    }`}
                 >
                   <div
-                    className={`inline-block p-3 rounded-xl ${
-                      message.role === 'user'
-                        ? 'bg-accent-blue/20 text-white rounded-tr-sm'
-                        : 'bg-white/5 text-text-secondary rounded-tl-sm'
-                    }`}
+                    className={`inline-block p-3 rounded-xl ${message.role === 'user'
+                      ? 'bg-accent-blue/20 text-white rounded-tr-sm'
+                      : 'bg-white/5 text-text-secondary rounded-tl-sm'
+                      }`}
                   >
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">
                       {message.content}
@@ -532,7 +529,7 @@ export default function NarrativePanel() {
               </div>
             ))}
             {isAIProcessing && (
-              <div className="flex gap-3">
+              <div className="flex gap-3 items-end">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-accent-gold/20">
                   <Loader2 className="text-accent-gold animate-spin" size={16} />
                 </div>
@@ -582,7 +579,7 @@ export default function NarrativePanel() {
               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-text-muted focus:outline-none focus:border-accent-gold/50 transition-colors resize-none h-20 disabled:opacity-50"
             />
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 mr-1">
             <button
               onClick={handleSend}
               disabled={!inputValue.trim() || !hasApiKey || isAIProcessing}
