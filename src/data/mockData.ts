@@ -102,6 +102,10 @@ export interface Finance {
   revenueGrowth?: number;
   expenseGrowth?: number;
   cashBalance?: number;
+  currentAssets?: number;
+  fixedAssets?: number;
+  shortTermDebt?: number;
+  longTermDebt?: number;
   debt: number;
   investments: number;
 }
