@@ -26,9 +26,9 @@ export default function Products() {
     { id: 'inventory' as TabType, label: '库存', icon: Warehouse },
   ];
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredProducts = (products || []).filter((product) => {
+    const matchesSearch = (product.name || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
+      (product.category || '').toLowerCase().includes((searchTerm || '').toLowerCase());
     const matchesStatus = selectedStatus === 'all' || product.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });

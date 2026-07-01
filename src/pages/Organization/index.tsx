@@ -34,9 +34,9 @@ export default function Organization() {
     { id: 'subsidiaries' as TabType, label: '子公司', icon: Building },
   ];
 
-  const filteredEmployees = employees.filter((employee) => {
-    const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.role.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredEmployees = (employees || []).filter((employee) => {
+    const matchesSearch = (employee.name || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
+      (employee.role || '').toLowerCase().includes((searchTerm || '').toLowerCase());
     const matchesDept = selectedDepartment === 'all' || employee.department === selectedDepartment;
     return matchesSearch && matchesDept;
   });

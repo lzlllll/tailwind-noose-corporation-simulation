@@ -61,9 +61,9 @@ export default function Operations() {
     { id: 'logistics' as TabType, label: '物流', icon: Truck },
   ];
 
-  const filteredTasks = operations.filter((task) => {
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.assignee.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredTasks = (operations || []).filter((task) => {
+    const matchesSearch = (task.title || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
+      (task.assignee || '').toLowerCase().includes((searchTerm || '').toLowerCase());
     const matchesStatus = selectedStatus === 'all' || task.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });
