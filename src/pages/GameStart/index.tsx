@@ -101,6 +101,7 @@ export default function GameStart() {
       flashModel: aiForm.flashModel,
       proModel: aiForm.proModel,
       apiBaseUrl: aiForm.apiBaseUrl,
+      devMode: false,
     });
 
     setIsImporting(true);
@@ -237,6 +238,7 @@ export default function GameStart() {
       flashModel: aiForm.flashModel,
       proModel: aiForm.proModel,
       apiBaseUrl: aiForm.apiBaseUrl,
+      devMode: false,
     });
 
     useGameStore.getState().setInitialSetup({
@@ -852,6 +854,7 @@ export default function GameStart() {
                       flashModel: aiForm.flashModel,
                       proModel: aiForm.proModel,
                       apiBaseUrl: aiForm.apiBaseUrl,
+                      devMode: false,
                     });
                     setShowAiPanel(false);
                   }}

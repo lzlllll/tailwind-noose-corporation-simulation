@@ -142,6 +142,7 @@ export interface AIResponse {
   summary?: string;
   contextSummary?: string;
   suggestedActions?: string[];
+  rawOutput?: string;
 }
 
 export interface ContextParams {
@@ -502,6 +503,7 @@ employees: [emp-001, emp-002]
     summary: flashResult,
     contextSummary: extractedSummary,
     suggestedActions,
+    rawOutput: proResult,
   };
 }
 

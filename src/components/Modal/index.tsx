@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Save, AlertCircle, Check } from 'lucide-react';
+import { X, Save, AlertCircle, Check, Terminal } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 
 interface ModelPreset {
@@ -183,6 +183,28 @@ export default function Modal() {
               <li>- <span className="text-accent-gold">Pro 模型</span>：高精度、深度推理，适用于叙事创作、决策推演等复杂任务</li>
             </ul>
           </div>
+        </div>
+      </div>
+
+      <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-start gap-3">
+            <Terminal className="text-accent-gold flex-shrink-0 mt-0.5" size={18} />
+            <div>
+              <p className="text-sm text-text-secondary">
+                <strong className="text-white">开发者模式</strong>
+              </p>
+              <p className="text-xs text-text-muted mt-1">开启后可在每条AI回复下方查看原始输出，便于调试和数据检查</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setLocalSettings(prev => ({ ...prev, devMode: !prev.devMode }))}
+            className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${localSettings.devMode ? 'bg-accent-gold' : 'bg-white/10'}`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${localSettings.devMode ? 'translate-x-6' : ''}`}
+            />
+          </button>
         </div>
       </div>
 

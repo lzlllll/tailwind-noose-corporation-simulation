@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Settings, Loader2, User, Bot, FileText, Clock, Save, Upload, Plus, RefreshCw } from 'lucide-react';
+import { Send, Settings, Loader2, User, Bot, FileText, Clock, Save, Upload, Plus, RefreshCw, Terminal } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import { generateNarrative, generateInitialGameData, DataOperation } from '@/services/aiService';
 import { ExternalNews, Competitor, OperationTask, InnovationProject, PlayerInfo } from '@/data/mockData';
@@ -121,6 +121,8 @@ function applyDataOperations(operations: DataOperation[]) {
 export default function NarrativePanel() {
   const [inputValue, setInputValue] = useState('');
   const [suggestedActions, setSuggestedActions] = useState<string[]>([]);
+  const [rawOutputMap, setRawOutputMap] = useState<Record<string, string>>({});
+  const [expandedRawId, setExpandedRawId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -210,6 +212,7 @@ export default function NarrativePanel() {
   const generateResponse = async (userContent: string, skipAddUser: boolean = false) => {
     setIsAIProcessing(true);
     setSuggestedActions([]);
+    setExpandedRawId(null);
 
     try {
       const gameData = {
@@ -274,6 +277,10 @@ export default function NarrativePanel() {
       };
 
       addChatMessage(aiMessage);
+
+      if (response.rawOutput) {
+        setRawOutputMap(prev => ({ ...prev, [aiMessage.id]: response.rawOutput! }));
+      }
 
       if (response.operations && response.operations.length > 0) {
         applyDataOperations(response.operations);
@@ -542,6 +549,22 @@ export default function NarrativePanel() {
                       {message.content}
                     </p>
                   </div>
+                  {message.role === 'assistant' && aiSettings.devMode && rawOutputMap[message.id] && (
+                    <div className="mt-1">
+                      <button
+                        onClick={() => setExpandedRawId(expandedRawId === message.id ? null : message.id)}
+                        className="text-xs text-accent-gold/70 hover:text-accent-gold transition-colors flex items-center gap-1"
+                      >
+                        <Terminal size={12} />
+                        {expandedRawId === message.id ? '收起原始输出' : '查看原始输出'}
+                      </button>
+                      {expandedRawId === message.id && (
+                        <pre className="mt-2 p-3 bg-black/40 border border-white/10 rounded-lg text-xs text-green-400 overflow-auto max-h-60 whitespace-pre-wrap break-all font-mono">
+                          {rawOutputMap[message.id]}
+                        </pre>
+                      )}
+                    </div>
+                  )}
                   <p className="text-xs text-text-muted mt-1">
                     {message.timestamp}
                   </p>

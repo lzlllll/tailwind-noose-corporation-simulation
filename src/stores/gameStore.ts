@@ -33,6 +33,7 @@ interface AISettings {
   flashModel: string;
   proModel: string;
   apiBaseUrl: string;
+  devMode: boolean;
 }
 
 interface TimeSettings {
@@ -179,6 +180,7 @@ export const useGameStore = create<GameStore>()(
         flashModel: 'gpt-4o-mini',
         proModel: 'gpt-4o',
         apiBaseUrl: 'https://api.openai.com/v1',
+        devMode: false,
       },
       timeSettings: {
         timezone: 8,
@@ -493,11 +495,15 @@ export const useGameStore = create<GameStore>()(
               objectives: asArray<string>(s.objectives),
               keyMetrics: asArray(s.keyMetrics),
             })),
-            aiSettings: data.aiSettings || {
+            aiSettings: data.aiSettings ? {
+              ...data.aiSettings,
+              devMode: data.aiSettings.devMode ?? false,
+            } : {
               apiKey: '',
               flashModel: 'gpt-4o-mini',
               proModel: 'gpt-4o',
               apiBaseUrl: 'https://api.openai.com/v1',
+              devMode: false,
             },
             timeSettings: data.timeSettings || {
               timezone: 8,
