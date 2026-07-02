@@ -239,9 +239,9 @@ export function generateInvestmentData(): InvestmentData[] {
   const data: InvestmentData[] = [];
   const colors = ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#6b7280'];
 
-  const totalRdBudget = innovations.reduce((sum, inn) => sum + inn.budget, 0);
-  const totalOperationsBudget = operations.reduce((sum, op) => sum + (op.priority === 'critical' || op.priority === 'high' ? 100000 : 50000), 0);
-  const totalStrategyBudget = strategies.reduce((sum, st) => sum + st.budget, 0);
+  const totalRdBudget = innovations.reduce((sum, inn) => sum + (inn && inn.budget || 0), 0);
+  const totalOperationsBudget = operations.reduce((sum, op) => sum + (op && (op.priority === 'critical' || op.priority === 'high') ? 100000 : (op ? 50000 : 0)), 0);
+  const totalStrategyBudget = strategies.reduce((sum, st) => sum + (st && st.budget || 0), 0);
 
   if (totalRdBudget > 0) {
     data.push({
