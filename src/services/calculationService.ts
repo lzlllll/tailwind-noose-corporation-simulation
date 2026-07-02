@@ -340,10 +340,14 @@ export function calculateStockPrices(): Stock[] {
     const indexGap = performance - expectation;
     const gapFactor = indexGap / 100;
 
-    const currentPrice = basePrice * (0.6 + performanceFactor * 0.4 + expectationFactor * 0.2 + gapFactor * 0.3);
+    const intrinsicValue = basePrice * (0.6 + performanceFactor * 0.4 + expectationFactor * 0.2 + gapFactor * 0.3);
+    const dailyNoise = (Math.random() * 0.06 - 0.03);
+    const currentPrice = intrinsicValue * (1 + dailyNoise);
+
     const trendDirection = gapFactor >= 0 ? 1 : -1;
-    const trendMagnitude = Math.min(Math.abs(gapFactor) * 0.08, 0.08);
-    const previousClose = currentPrice / (1 + trendDirection * trendMagnitude);
+    const trendMagnitude = Math.min(Math.abs(gapFactor) * 0.06, 0.06);
+    const noiseOffset = (Math.random() * 0.04 - 0.02);
+    const previousClose = currentPrice / (1 + trendDirection * trendMagnitude + noiseOffset);
 
     const change = currentPrice - previousClose;
     const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
@@ -358,8 +362,8 @@ export function calculateStockPrices(): Stock[] {
       changePercent: Math.round(changePercent * 100) / 100,
       marketCap: Math.round(marketCap),
       peRatio: Math.round(peRatio * 100) / 100,
-      high52w: Math.round(currentPrice * 1.5 * 100) / 100,
-      low52w: Math.round(currentPrice * 0.6 * 100) / 100,
+      high52w: Math.round(intrinsicValue * 1.5 * 100) / 100,
+      low52w: Math.round(intrinsicValue * 0.6 * 100) / 100,
       volume: Math.floor((0.5 + Math.random() * 0.5) * shares * 0.1),
     };
   };

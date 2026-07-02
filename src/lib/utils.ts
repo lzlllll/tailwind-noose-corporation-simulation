@@ -16,14 +16,21 @@ export function formatCurrency(value: number | undefined | null): string {
   if (value === undefined || value === null || isNaN(value)) {
     return '--';
   }
+  const sign = value < 0 ? '-' : '';
   const absValue = Math.abs(value);
-  if (absValue >= 100000000) {
-    return (value / 100000000).toFixed(2) + '亿';
+  const rounded = Math.round(absValue / 100) * 100;
+
+  if (rounded >= 100000000) {
+    const yi = rounded / 100000000;
+    const yiStr = yi.toFixed(2).replace(/\.?0+$/, '');
+    return sign + yiStr + '亿';
   }
-  if (absValue >= 10000) {
-    return (value / 10000).toFixed(0) + '万';
+  if (rounded >= 10000) {
+    const wan = rounded / 10000;
+    const wanStr = wan.toFixed(2).replace(/\.?0+$/, '');
+    return sign + wanStr + '万';
   }
-  return value.toFixed(0);
+  return sign + rounded.toFixed(0);
 }
 
 export function formatPercent(value: number | undefined | null, decimals: number = 1): string {
