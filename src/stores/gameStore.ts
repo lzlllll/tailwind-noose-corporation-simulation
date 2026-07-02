@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { asArray } from '@/lib/utils';
+import { asArray, dedupeById } from '@/lib/utils';
 import {
   Company,
   Product,
@@ -216,8 +216,8 @@ export const useGameStore = create<GameStore>()(
           shareholdings: asArray<Shareholding>(company.shareholdings),
         } : company
       }),
-      setProducts: (products) => set({ products: asArray<Product>(products) }),
-      setEmployees: (employees) => set({ employees: asArray<Employee>(employees) }),
+      setProducts: (products) => set({ products: dedupeById(asArray<Product>(products)) }),
+      setEmployees: (employees) => set({ employees: dedupeById(asArray<Employee>(employees)) }),
       setFinance: (finance) => set({ finance }),
       setFinanceHistory: (financeHistory) => set({ financeHistory: asArray(financeHistory) }),
       setNPCs: (npcs) => set({
@@ -250,16 +250,16 @@ export const useGameStore = create<GameStore>()(
             : npc
         ),
       })),
-      setOperations: (operations) => set({ operations: asArray<OperationTask>(operations) }),
+      setOperations: (operations) => set({ operations: dedupeById(asArray<OperationTask>(operations)) }),
       setInnovations: (innovations) => set({
-        innovations: asArray<InnovationProject>(innovations).map((inn) => ({
+        innovations: dedupeById(asArray<InnovationProject>(innovations).map((inn) => ({
           ...inn,
           team: asArray<string>(inn.team),
-        }))
+        })))
       }),
-      setNews: (news) => set({ news: asArray<ExternalNews>(news) }),
-      setCompetitors: (competitors) => set({ competitors: asArray<Competitor>(competitors) }),
-      setSuppliers: (suppliers) => set({ suppliers: asArray<Supplier>(suppliers) }),
+      setNews: (news) => set({ news: dedupeById(asArray<ExternalNews>(news)) }),
+      setCompetitors: (competitors) => set({ competitors: dedupeById(asArray<Competitor>(competitors)) }),
+      setSuppliers: (suppliers) => set({ suppliers: dedupeById(asArray<Supplier>(suppliers)) }),
       setShareholdings: (shareholdings) => set({ shareholdings: asArray<Shareholding>(shareholdings) }),
       setDepartmentsData: (departmentsData) => set({ departmentsData: asArray(departmentsData) }),
       setBusinessLines: (businessLines) => set({
@@ -276,11 +276,11 @@ export const useGameStore = create<GameStore>()(
       setSubsidiaries: (subsidiaries) => set({ subsidiaries: asArray<Subsidiary>(subsidiaries) }),
       setCashFlow: (cashFlow) => set({ cashFlow: asArray<CashFlowItem>(cashFlow) }),
       setStrategies: (strategies) => set({
-        strategies: asArray<Strategy>(strategies).map((s) => ({
+        strategies: dedupeById(asArray<Strategy>(strategies).map((s) => ({
           ...s,
           objectives: asArray<string>(s.objectives),
           keyMetrics: asArray(s.keyMetrics),
-        }))
+        })))
       }),
       setAISettings: (aiSettings) => set({ aiSettings }),
       setTimeSettings: (timeSettings) => set({ timeSettings }),

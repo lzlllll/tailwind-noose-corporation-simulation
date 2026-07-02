@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Globe, TrendingUp, TrendingDown, Minus, Newspaper, Users, AlertCircle, ChevronRight } from 'lucide-react';
 import Card from '@/components/Card';
 import StatCard from '@/components/StatCard';
 import { useGameStore } from '@/stores/gameStore';
-import { formatCurrency, safeToFixed } from '@/lib/utils';
+import { formatCurrency, safeToFixed, asArray } from '@/lib/utils';
+import { ExternalNews } from '@/data/mockData';
 
 const impactColors = {
   positive: { bg: 'bg-accent-green/20', text: 'text-accent-green', icon: TrendingUp, label: '利好' },
@@ -13,9 +14,23 @@ const impactColors = {
 
 export default function External() {
   const [selectedNews, setSelectedNews] = useState<string | null>(null);
-  const { news, competitors } = useGameStore();
+  const { news, competitors, gameTime } = useGameStore();
 
   const validCompetitors = (competitors || []).filter(c => c);
+
+  const recentNews = useMemo(() => {
+    const validNews = asArray<ExternalNews>(news).filter(n => n && n.date);
+    if (!gameTime) return validNews;
+
+    const now = new Date(gameTime);
+    const threeMonthsAgo = new Date(now);
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+    return validNews.filter(item => {
+      const itemDate = new Date(item.date);
+      return itemDate >= threeMonthsAgo && itemDate <= now;
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [news, gameTime]);
   const totalMarketSize = validCompetitors.length > 0
     ? Math.round(validCompetitors.reduce((sum, c) => sum + (c.revenue || 0), 0) / ((validCompetitors.reduce((sum, c) => sum + (c.marketShare || 0), 0) / 100) || 1))
     : 0;
@@ -76,7 +91,9 @@ export default function External() {
         <div className="lg:col-span-2">
           <Card title="市场动态">
             <div className="space-y-4">
-              {news.map((item) => {
+              {recentNews.length === 0 ? (
+                <div className="text-center text-text-muted py-8">暂无最近三个月的新闻</div>
+              ) : recentNews.map((item) => {
                 const impact = item.impact as 'positive' | 'negative' | 'neutral';
                 const ImpactIcon = impactColors[impact]?.icon || Minus;
                 return (

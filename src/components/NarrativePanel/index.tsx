@@ -70,27 +70,38 @@ function applyDataOperations(operations: DataOperation[]) {
         }
         break;
       case 'add':
+        const mergeById = <T extends { id?: string }>(existing: T[], incoming: T[]): T[] => {
+          const map = new Map<string, T>();
+          existing.forEach((item) => {
+            if (item && item.id) map.set(item.id, item);
+          });
+          incoming.forEach((item) => {
+            if (item && item.id) map.set(item.id, { ...map.get(item.id), ...item } as T);
+          });
+          return Array.from(map.values());
+        };
+
         if (op.target === 'products') {
-          const newProducts = [...store.products, ...asArray<any>(op.data)];
-          store.setProducts(newProducts as any);
+          const merged = mergeById(store.products, asArray<any>(op.data));
+          store.setProducts(merged as any);
         } else if (op.target === 'employees') {
-          const newEmployees = [...store.employees, ...asArray<any>(op.data)];
-          store.setEmployees(newEmployees as any);
+          const merged = mergeById(store.employees, asArray<any>(op.data));
+          store.setEmployees(merged as any);
         } else if (op.target === 'strategies') {
-          const newStrategies = [...store.strategies, ...asArray<any>(op.data)];
-          store.setStrategies(newStrategies as any);
+          const merged = mergeById(store.strategies, asArray<any>(op.data));
+          store.setStrategies(merged as any);
         } else if (op.target === 'news') {
-          const newNews = [...store.news, ...asArray<ExternalNews>(op.data)];
-          store.setNews(newNews);
+          const merged = mergeById(store.news, asArray<ExternalNews>(op.data));
+          store.setNews(merged);
         } else if (op.target === 'competitors') {
-          const newCompetitors = [...store.competitors, ...asArray<Competitor>(op.data)];
-          store.setCompetitors(newCompetitors);
+          const merged = mergeById(store.competitors, asArray<Competitor>(op.data));
+          store.setCompetitors(merged);
         } else if (op.target === 'operations') {
-          const newOperations = [...store.operations, ...asArray<OperationTask>(op.data)];
-          store.setOperations(newOperations);
+          const merged = mergeById(store.operations, asArray<OperationTask>(op.data));
+          store.setOperations(merged);
         } else if (op.target === 'innovations') {
-          const newInnovations = [...store.innovations, ...asArray<InnovationProject>(op.data)];
-          store.setInnovations(newInnovations);
+          const merged = mergeById(store.innovations, asArray<InnovationProject>(op.data));
+          store.setInnovations(merged);
         }
         break;
       case 'delete':

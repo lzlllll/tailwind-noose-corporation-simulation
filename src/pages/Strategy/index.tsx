@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useGameStore } from '@/stores/gameStore';
 import { Target, TrendingUp, CheckCircle2, Clock, User, BarChart3 } from 'lucide-react';
 import { safeToFixed, formatPercent, asArray } from '@/lib/utils';
@@ -17,12 +18,17 @@ const statusMap: Record<string, { label: string; color: string; bgColor: string 
 };
 
 export default function Strategy() {
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const { strategies } = useGameStore();
 
-  const validStrategies = strategies.filter(s => s);
+  const validStrategies = (strategies || []).filter(s => s);
   const inProgressCount = validStrategies.filter(s => s.status === 'in-progress').length;
   const totalBudget = validStrategies.reduce((sum, s) => sum + (s.budget || 0), 0);
   const totalSpent = validStrategies.reduce((sum, s) => sum + (s.spent || 0), 0);
+
+  const filteredStrategies = validStrategies.filter(s =>
+    selectedStatus === 'all' || s.status === selectedStatus
+  );
 
   return (
     <div className="p-8">
@@ -71,15 +77,37 @@ export default function Strategy() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-white">战略列表</h2>
           <div className="flex gap-2">
-            <button className="px-3 py-1 text-sm bg-white/10 rounded-full text-text-secondary hover:text-white transition-colors">全部</button>
-            <button className="px-3 py-1 text-sm bg-accent-blue/20 rounded-full text-accent-blue">进行中</button>
-            <button className="px-3 py-1 text-sm bg-yellow-400/20 rounded-full text-yellow-400">规划中</button>
-            <button className="px-3 py-1 text-sm bg-accent-green/20 rounded-full text-accent-green">已完成</button>
+            {[
+              { key: 'all', label: '全部' },
+              { key: 'in-progress', label: '进行中' },
+              { key: 'planning', label: '规划中' },
+              { key: 'completed', label: '已完成' },
+            ].map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setSelectedStatus(item.key)}
+                className={`px-3 py-1 text-sm rounded-full transition-colors ${selectedStatus === item.key
+                  ? item.key === 'all'
+                    ? 'bg-white/20 text-white'
+                    : statusMap[item.key]
+                      ? `${statusMap[item.key].bgColor} ${statusMap[item.key].color}`
+                      : 'bg-white/20 text-white'
+                  : 'bg-white/10 text-text-secondary hover:text-white'
+                  }`}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         </div>
 
         <div className="space-y-4">
-          {strategies.map((strategy) => {
+          {filteredStrategies.length === 0 ? (
+            <div className="text-center py-16">
+              <Target className="mx-auto text-text-muted mb-4" size={48} />
+              <p className="text-text-secondary">未找到匹配的战略</p>
+            </div>
+          ) : filteredStrategies.map((strategy) => {
             const status = statusMap[strategy.status] || { label: strategy.status, color: 'text-white', bgColor: 'bg-white/10' };
             return (
               <div key={strategy.id} className="bg-white/5 rounded-xl p-6 hover:bg-white/10 transition-colors">

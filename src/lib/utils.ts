@@ -49,3 +49,13 @@ export function asArray<T>(value: T[] | null | undefined | any): T[] {
   }
   return [] as T[];
 }
+
+export function dedupeById<T extends { id?: string }>(arr: T[]): T[] {
+  const map = new Map<string, T>();
+  for (const item of arr) {
+    if (item && item.id) {
+      map.set(item.id, { ...map.get(item.id), ...item });
+    }
+  }
+  return Array.from(map.values());
+}
