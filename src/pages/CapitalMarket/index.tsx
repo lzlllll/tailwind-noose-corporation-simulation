@@ -192,33 +192,69 @@ export default function CapitalMarket() {
 
       {activeTab === 'stocks' && (
         <div className="space-y-6">
-          {company?.isListed && (
-            <Card title="本企业股票">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 bg-white/5 rounded-lg">
-                  <p className="text-text-muted text-sm mb-1">股票代码</p>
-                  <p className="text-white text-xl font-bold">{company.stockCode || '--'}</p>
-                  <p className="text-text-muted text-xs">{company.stockExchange}</p>
+          {company?.isListed && (() => {
+            const playerStock = stocks.find(s => s.id === 'stock-player');
+            const displayPrice = playerStock ? playerStock.currentPrice : (company.stockPrice || 0);
+            const displayChange = playerStock ? playerStock.changePercent : 0;
+            const displayMarketCap = playerStock ? playerStock.marketCap : (company.marketValue || 0);
+            const displayPERatio = playerStock ? playerStock.peRatio : 0;
+            return (
+              <Card title="本企业股票">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-4 bg-white/5 rounded-lg">
+                    <p className="text-text-muted text-sm mb-1">股票代码</p>
+                    <p className="text-white text-xl font-bold">{company.stockCode || '--'}</p>
+                    <p className="text-text-muted text-xs">{company.stockExchange}</p>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-lg">
+                    <p className="text-text-muted text-sm mb-1">当前股价</p>
+                    <p className="text-accent-green text-xl font-bold">
+                      ¥{safeToFixed(displayPrice, 2)}
+                    </p>
+                    <p className={`text-xs mt-1 ${displayChange >= 0 ? 'text-status-success' : 'text-status-danger'}`}>
+                      {displayChange >= 0 ? '+' : ''}{safeToFixed(displayChange, 2)}%
+                    </p>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-lg">
+                    <p className="text-text-muted text-sm mb-1">市值</p>
+                    <p className="text-white text-xl font-bold">
+                      {formatCurrency(displayMarketCap)}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-lg">
+                    <p className="text-text-muted text-sm mb-1">市盈率</p>
+                    <p className="text-white text-xl font-bold">{safeToFixed(displayPERatio, 2)}</p>
+                  </div>
                 </div>
-                <div className="p-4 bg-white/5 rounded-lg">
-                  <p className="text-text-muted text-sm mb-1">当前股价</p>
-                  <p className="text-accent-green text-xl font-bold">
-                    ¥{company.stockPrice ? safeToFixed(company.stockPrice, 2) : '--'}
-                  </p>
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="p-3 bg-white/5 rounded-lg">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-text-muted text-xs">表现指数</span>
+                      <span className="text-accent-green font-medium">{safeToFixed(company.performanceIndex, 0)}</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-white/10 rounded-full">
+                      <div
+                        className="h-full bg-accent-green rounded-full"
+                        style={{ width: `${Math.max(0, Math.min(100, company.performanceIndex || 0))}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="p-3 bg-white/5 rounded-lg">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-text-muted text-xs">市场预期指数</span>
+                      <span className="text-accent-gold font-medium">{safeToFixed(company.marketExpectationIndex, 0)}</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-white/10 rounded-full">
+                      <div
+                        className="h-full bg-accent-gold rounded-full"
+                        style={{ width: `${Math.max(0, Math.min(100, company.marketExpectationIndex || 0))}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="p-4 bg-white/5 rounded-lg">
-                  <p className="text-text-muted text-sm mb-1">市值</p>
-                  <p className="text-white text-xl font-bold">
-                    {formatCurrency(company.marketValue)}
-                  </p>
-                </div>
-                <div className="p-4 bg-white/5 rounded-lg">
-                  <p className="text-text-muted text-sm mb-1">市盈率</p>
-                  <p className="text-white text-xl font-bold">--</p>
-                </div>
-              </div>
-            </Card>
-          )}
+              </Card>
+            );
+          })()}
 
           <Card title="其他上市公司">
             {!isDataGenerated || (stocks || []).length === 0 ? (

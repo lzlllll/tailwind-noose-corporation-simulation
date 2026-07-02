@@ -322,74 +322,107 @@ export function calculateStockPrices(): Stock[] {
   const store = useGameStore.getState();
   const competitors = store.competitors;
   const suppliers = store.suppliers;
+  const company = store.company;
 
   const stocks: Stock[] = [];
 
+  const perfIdx = (v: number | undefined) => (v === undefined ? 50 : Math.max(0, Math.min(100, v)));
+  const expIdx = (v: number | undefined) => (v === undefined ? 50 : Math.max(0, Math.min(100, v)));
+
+  const computeStockMetrics = (
+    basePrice: number,
+    performance: number,
+    expectation: number,
+    shares: number
+  ) => {
+    const performanceFactor = performance / 100;
+    const expectationFactor = expectation / 100;
+    const indexGap = performance - expectation;
+    const gapFactor = indexGap / 100;
+
+    const currentPrice = basePrice * (0.6 + performanceFactor * 0.4 + expectationFactor * 0.2 + gapFactor * 0.3);
+    const trendDirection = gapFactor >= 0 ? 1 : -1;
+    const trendMagnitude = Math.min(Math.abs(gapFactor) * 0.08, 0.08);
+    const previousClose = currentPrice / (1 + trendDirection * trendMagnitude);
+
+    const change = currentPrice - previousClose;
+    const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+    const marketCap = currentPrice * shares;
+    const eps = marketCap > 0 ? shares * 0.05 / shares : 0;
+    const peRatio = eps > 0 ? currentPrice / eps : 0;
+
+    return {
+      currentPrice: Math.round(currentPrice * 100) / 100,
+      previousClose: Math.round(previousClose * 100) / 100,
+      change: Math.round(change * 100) / 100,
+      changePercent: Math.round(changePercent * 100) / 100,
+      marketCap: Math.round(marketCap),
+      peRatio: Math.round(peRatio * 100) / 100,
+      high52w: Math.round(currentPrice * 1.5 * 100) / 100,
+      low52w: Math.round(currentPrice * 0.6 * 100) / 100,
+      volume: Math.floor((0.5 + Math.random() * 0.5) * shares * 0.1),
+    };
+  };
+
+  if (company && company.isListed) {
+    const perf = perfIdx(company.performanceIndex);
+    const exp = expIdx(company.marketExpectationIndex);
+    const basePrice = (company.stockPrice && company.stockPrice > 0)
+      ? company.stockPrice
+      : 10 + (company.marketShare || 5) * 2;
+    const shares = Math.max(1000000, Math.floor((company.marketValue || basePrice * 1000000) / basePrice));
+    const m = computeStockMetrics(basePrice, perf, exp, shares);
+
+    stocks.push({
+      id: 'stock-player',
+      companyId: company.id,
+      companyName: company.name,
+      stockCode: company.stockCode || '600000',
+      stockExchange: company.stockExchange || '上交所',
+      ...m,
+      performanceIndex: perf,
+      marketExpectationIndex: exp,
+    });
+  }
+
   competitors.forEach((comp, index) => {
-    if (comp.performanceIndex !== undefined && comp.marketExpectationIndex !== undefined) {
-      const basePrice = 10 + comp.marketShare * 2;
-      const performanceFactor = comp.performanceIndex / 100;
-      const expectationFactor = comp.marketExpectationIndex / 100;
+    if (!comp) return;
+    const perf = perfIdx(comp.performanceIndex);
+    const exp = expIdx(comp.marketExpectationIndex);
+    const basePrice = 10 + (comp.marketShare || 5) * 2;
+    const shares = Math.max(1000000, Math.floor((comp.revenue || basePrice * 1000000) / basePrice) * 10);
+    const m = computeStockMetrics(basePrice, perf, exp, shares);
 
-      const currentPrice = basePrice * (0.7 + performanceFactor * 0.5 + expectationFactor * 0.3);
-      const previousClose = currentPrice * (1 + (Math.random() * 0.06 - 0.03));
-      const change = currentPrice - previousClose;
-      const changePercent = (change / previousClose) * 100;
-      const marketCap = currentPrice * (comp.revenue / currentPrice * 10);
-      const peRatio = currentPrice / (comp.revenue * 0.1 / (comp.revenue / currentPrice * 10));
-
-      stocks.push({
-        id: `stock-comp-${index}`,
-        companyId: comp.id,
-        companyName: comp.name,
-        stockCode: `600${100 + index}`,
-        stockExchange: '上交所',
-        currentPrice: Math.round(currentPrice * 100) / 100,
-        previousClose: Math.round(previousClose * 100) / 100,
-        change: Math.round(change * 100) / 100,
-        changePercent: Math.round(changePercent * 100) / 100,
-        volume: Math.floor(Math.random() * 100000000),
-        marketCap: Math.round(marketCap),
-        peRatio: Math.round(peRatio * 100) / 100,
-        high52w: Math.round(currentPrice * 1.5 * 100) / 100,
-        low52w: Math.round(currentPrice * 0.6 * 100) / 100,
-        performanceIndex: comp.performanceIndex,
-        marketExpectationIndex: comp.marketExpectationIndex,
-      });
-    }
+    stocks.push({
+      id: `stock-comp-${index}`,
+      companyId: comp.id,
+      companyName: comp.name,
+      stockCode: `600${100 + index}`,
+      stockExchange: '上交所',
+      ...m,
+      performanceIndex: perf,
+      marketExpectationIndex: exp,
+    });
   });
 
   suppliers.forEach((sup, index) => {
-    if (sup.performanceIndex !== undefined && sup.marketExpectationIndex !== undefined && sup.type === 'supplier') {
-      const basePrice = 5 + sup.quality * 0.1;
-      const performanceFactor = sup.performanceIndex / 100;
-      const expectationFactor = sup.marketExpectationIndex / 100;
+    if (!sup || sup.type !== 'supplier') return;
+    const perf = perfIdx(sup.performanceIndex);
+    const exp = expIdx(sup.marketExpectationIndex);
+    const basePrice = 5 + (sup.quality || 50) * 0.1;
+    const shares = 10000000;
+    const m = computeStockMetrics(basePrice, perf, exp, shares);
 
-      const currentPrice = basePrice * (0.7 + performanceFactor * 0.5 + expectationFactor * 0.3);
-      const previousClose = currentPrice * (1 + (Math.random() * 0.06 - 0.03));
-      const change = currentPrice - previousClose;
-      const changePercent = (change / previousClose) * 100;
-      const marketCap = currentPrice * 10000000;
-
-      stocks.push({
-        id: `stock-sup-${index}`,
-        companyId: sup.id,
-        companyName: sup.name,
-        stockCode: `002${200 + index}`,
-        stockExchange: '深交所',
-        currentPrice: Math.round(currentPrice * 100) / 100,
-        previousClose: Math.round(previousClose * 100) / 100,
-        change: Math.round(change * 100) / 100,
-        changePercent: Math.round(changePercent * 100) / 100,
-        volume: Math.floor(Math.random() * 50000000),
-        marketCap: Math.round(marketCap),
-        peRatio: Math.round((currentPrice / (sup.contractValue / 10000000)) * 100) / 100,
-        high52w: Math.round(currentPrice * 1.4 * 100) / 100,
-        low52w: Math.round(currentPrice * 0.5 * 100) / 100,
-        performanceIndex: sup.performanceIndex,
-        marketExpectationIndex: sup.marketExpectationIndex,
-      });
-    }
+    stocks.push({
+      id: `stock-sup-${index}`,
+      companyId: sup.id,
+      companyName: sup.name,
+      stockCode: `002${200 + index}`,
+      stockExchange: '深交所',
+      ...m,
+      performanceIndex: perf,
+      marketExpectationIndex: exp,
+    });
   });
 
   return stocks;

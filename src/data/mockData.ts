@@ -18,6 +18,7 @@ export interface Company {
   creditScore?: number;
   loanParameter?: number;
   performanceIndex?: number;
+  marketExpectationIndex?: number;
   shareholdings?: Shareholding[];
 }
 
