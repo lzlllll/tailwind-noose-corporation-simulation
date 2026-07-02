@@ -89,6 +89,7 @@ interface GameStore {
   personalPanelOpen: boolean;
   gameStarted: boolean;
   contextSummary: string;
+  memorySummaries: string[];
   initialSetup: {
     player: { name: string; age: string; gender: string; title: string; background: string } | null;
     company: { name: string; history: string; status: string; business: string; headquarters: string; startYear: string; startMonth: string; startDay: string } | null;
@@ -143,6 +144,7 @@ interface GameStore {
   setPersonalPanelOpen: (open: boolean) => void;
   setGameStarted: (started: boolean) => void;
   setContextSummary: (summary: string) => void;
+  setMemorySummaries: (summaries: string[]) => void;
   setInitialSetup: (setup: { player: any; company: any }) => void;
   resetGame: () => void;
   saveGame: () => string;
@@ -201,6 +203,7 @@ export const useGameStore = create<GameStore>()(
       personalPanelOpen: false,
       gameStarted: false,
       contextSummary: '',
+      memorySummaries: [],
       initialSetup: {
         player: null,
         company: null,
@@ -366,6 +369,7 @@ export const useGameStore = create<GameStore>()(
       setPersonalPanelOpen: (personalPanelOpen) => set({ personalPanelOpen }),
       setGameStarted: (gameStarted) => set({ gameStarted }),
       setContextSummary: (contextSummary) => set({ contextSummary }),
+      setMemorySummaries: (memorySummaries) => set({ memorySummaries: asArray<string>(memorySummaries) }),
       setInitialSetup: (initialSetup) => set({ initialSetup }),
       resetGame: () => set({
         currentPage: '/',
@@ -404,6 +408,7 @@ export const useGameStore = create<GameStore>()(
         personalPanelOpen: false,
         gameStarted: false,
         contextSummary: '',
+        memorySummaries: [],
       }),
       saveGame: () => {
         const state = useGameStore.getState();
@@ -445,6 +450,7 @@ export const useGameStore = create<GameStore>()(
             playerInfo: state.playerInfo,
             gameStarted: state.gameStarted,
             contextSummary: state.contextSummary,
+            memorySummaries: state.memorySummaries,
           },
         };
         return JSON.stringify(saveData);
@@ -522,6 +528,7 @@ export const useGameStore = create<GameStore>()(
             } : null,
             gameStarted: data.gameStarted !== undefined ? data.gameStarted : true,
             contextSummary: data.contextSummary || '',
+            memorySummaries: asArray<string>(data.memorySummaries),
           });
           return true;
         } catch (e) {
@@ -567,6 +574,7 @@ export const useGameStore = create<GameStore>()(
         isDataGenerated: state.isDataGenerated,
         playerInfo: state.playerInfo,
         contextSummary: state.contextSummary,
+        memorySummaries: state.memorySummaries,
         currentPage: state.currentPage,
         initialSetup: state.initialSetup,
       }),

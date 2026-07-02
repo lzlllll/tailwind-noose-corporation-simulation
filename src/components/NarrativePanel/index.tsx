@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Settings, Loader2, User, Bot, FileText, Clock, Save, Upload, Plus, RefreshCw, Terminal } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
-import { generateNarrative, generateInitialGameData, DataOperation } from '@/services/aiService';
+import { generateNarrative, generateInitialGameData, DataOperation, summarizeOldMemories, compressSummariesIfNeeded } from '@/services/aiService';
 import { ExternalNews, Competitor, OperationTask, InnovationProject, PlayerInfo } from '@/data/mockData';
 import { checkMonthChange, generateMonthlyCashFlow } from '@/services/calculationService';
 import { asArray } from '@/lib/utils';
@@ -149,6 +149,8 @@ export default function NarrativePanel() {
     setIsDataGenerated,
     contextSummary,
     setContextSummary,
+    memorySummaries,
+    setMemorySummaries,
     isDataGenerated,
     initialSetup,
   } = useGameStore();
@@ -209,6 +211,26 @@ export default function NarrativePanel() {
     return assistantMessages.slice(-4).map(m => m.content);
   };
 
+  const processMemorySummaries = async (recentMessagesBeforeGenerate: string[]) => {
+    if (recentMessagesBeforeGenerate.length < 4) return;
+
+    const messageToSummarize = recentMessagesBeforeGenerate[0];
+    if (!messageToSummarize || messageToSummarize.trim().length === 0) return;
+
+    try {
+      const newSummaries = await summarizeOldMemories([messageToSummarize]);
+      const currentSummaries = asArray<string>(useGameStore.getState().memorySummaries);
+      let updatedSummaries = [...currentSummaries, ...newSummaries.filter(s => s && s.trim().length > 0)];
+
+      updatedSummaries = await compressSummariesIfNeeded(updatedSummaries);
+
+      setMemorySummaries(updatedSummaries);
+      console.log('记忆总结已更新，共', updatedSummaries.length, '条');
+    } catch (e) {
+      console.error('处理记忆总结失败:', e);
+    }
+  };
+
   const generateResponse = async (userContent: string, skipAddUser: boolean = false) => {
     setIsAIProcessing(true);
     setSuggestedActions([]);
@@ -249,6 +271,7 @@ export default function NarrativePanel() {
       const response = await generateNarrative(userContent, gameData, {
         contextSummary: contextSummary,
         recentMessages: recentMessages,
+        memorySummaries: asArray<string>(useGameStore.getState().memorySummaries),
       });
 
       setNarrativeText(response.narrative);
@@ -290,6 +313,8 @@ export default function NarrativePanel() {
       if (response.suggestedActions && response.suggestedActions.length > 0) {
         setSuggestedActions(response.suggestedActions);
       }
+
+      await processMemorySummaries(recentMessages);
     } catch (error) {
       console.error('AI调用失败:', error);
       const errorMessage = {

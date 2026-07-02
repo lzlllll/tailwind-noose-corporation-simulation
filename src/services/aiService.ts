@@ -148,6 +148,7 @@ export interface AIResponse {
 export interface ContextParams {
   contextSummary: string;
   recentMessages: string[];
+  memorySummaries?: string[];
 }
 
 export interface NPCChatResponse {
@@ -224,6 +225,114 @@ export async function callProModel(prompt: string): Promise<string> {
   } catch (error) {
     console.error('Pro模型调用失败:', error);
     throw error;
+  }
+}
+
+const MEMORY_SUMMARY_MAX_CHARS = 100;
+const MEMORY_SUMMARIES_TOTAL_LIMIT = 1000;
+
+export async function summarizeOldMemories(messages: string[]): Promise<string[]> {
+  if (!messages || messages.length === 0) return [];
+
+  const results: string[] = [];
+  for (const msg of messages) {
+    if (!msg || msg.trim().length === 0) {
+      results.push('');
+      continue;
+    }
+    if (msg.length <= MEMORY_SUMMARY_MAX_CHARS) {
+      results.push(msg.trim());
+      continue;
+    }
+
+    const prompt = `请将下面的叙事内容总结为不超过${MEMORY_SUMMARY_MAX_CHARS}字的摘要，保留关键事件、决策和结果：
+
+${msg}
+
+要求：
+1. 摘要字数严格不超过${MEMORY_SUMMARY_MAX_CHARS}字
+2. 保留核心信息：发生了什么、谁做的、结果如何
+3. 不要添加任何解释性文字，直接输出摘要内容`;
+
+    try {
+      const summary = await callFlashModel(prompt);
+      const trimmed = summary.trim();
+      if (trimmed.length > MEMORY_SUMMARY_MAX_CHARS) {
+        results.push(trimmed.slice(0, MEMORY_SUMMARY_MAX_CHARS));
+      } else {
+        results.push(trimmed);
+      }
+    } catch (e) {
+      console.error('总结旧记忆失败:', e);
+      results.push(msg.slice(0, MEMORY_SUMMARY_MAX_CHARS));
+    }
+  }
+  return results;
+}
+
+export async function compressSummariesIfNeeded(summaries: string[]): Promise<string[]> {
+  if (!summaries || summaries.length === 0) return [];
+
+  const totalChars = summaries.reduce((sum, s) => sum + (s ? s.length : 0), 0);
+  if (totalChars <= MEMORY_SUMMARIES_TOTAL_LIMIT) {
+    return summaries;
+  }
+
+  const joined = summaries.filter(s => s && s.trim().length > 0).join('\n');
+  const prompt = `以下是一组历史记忆摘要，总字数超过了${MEMORY_SUMMARIES_TOTAL_LIMIT}字。请将其进一步压缩总结，输出一个新的摘要列表，总字数严格不超过${MEMORY_SUMMARIES_TOTAL_LIMIT}字。
+
+【原始摘要列表】
+${joined}
+
+要求：
+1. 保留最关键的信息：重大事件、关键决策、重要转折点
+2. 合并相似或相关的条目
+3. 每条摘要保持简洁，不超过${MEMORY_SUMMARY_MAX_CHARS}字
+4. 输出格式：每行一条摘要，不要编号，不要任何额外说明
+5. 总字数严格不超过${MEMORY_SUMMARIES_TOTAL_LIMIT}字`;
+
+  try {
+    const compressed = await callFlashModel(prompt);
+    const lines = compressed.split('\n')
+      .map(s => s.trim())
+      .filter(s => s.length > 0)
+      .slice(0, MEMORY_SUMMARIES_TOTAL_LIMIT / 20);
+
+    const finalTotal = lines.reduce((sum, s) => sum + s.length, 0);
+    if (finalTotal > MEMORY_SUMMARIES_TOTAL_LIMIT) {
+      const truncated: string[] = [];
+      let used = 0;
+      for (const line of lines) {
+        if (used + line.length > MEMORY_SUMMARIES_TOTAL_LIMIT) {
+          const remain = MEMORY_SUMMARIES_TOTAL_LIMIT - used;
+          if (remain > 10) {
+            truncated.push(line.slice(0, remain));
+          }
+          break;
+        }
+        truncated.push(line);
+        used += line.length;
+      }
+      return truncated;
+    }
+    return lines;
+  } catch (e) {
+    console.error('压缩记忆摘要失败:', e);
+    const truncated: string[] = [];
+    let used = 0;
+    for (const s of summaries) {
+      if (!s) continue;
+      if (used + s.length > MEMORY_SUMMARIES_TOTAL_LIMIT) {
+        const remain = MEMORY_SUMMARIES_TOTAL_LIMIT - used;
+        if (remain > 10) {
+          truncated.push(s.slice(0, remain));
+        }
+        break;
+      }
+      truncated.push(s);
+      used += s.length;
+    }
+    return truncated;
   }
 }
 
@@ -381,12 +490,16 @@ finance, products, news`;
 
   let contextSection = '';
   if (contextParams) {
-    const { contextSummary, recentMessages } = contextParams;
+    const { contextSummary, recentMessages, memorySummaries } = contextParams;
+    const validSummaries = asArray<string>(memorySummaries).filter(s => s && s.trim().length > 0);
     contextSection = `
 【历史上下文摘要】
 ${contextSummary || '暂无历史摘要'}
 
-【最近4条叙事正文】
+【更早记忆摘要】（每条≤100字，已压缩以节省token）
+${validSummaries.length > 0 ? validSummaries.map((s, i) => `[${i + 1}] ${s}`).join('\n') : '无更早记忆'}
+
+【最近4条叙事正文】（完整保留）
 ${recentMessages.length > 0 ? recentMessages.map((msg, i) => `[${i + 1}] ${msg}`).join('\n') : '暂无历史叙事'}`;
   }
 
