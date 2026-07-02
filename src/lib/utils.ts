@@ -17,20 +17,20 @@ export function formatCurrency(value: number | undefined | null): string {
     return '--';
   }
   const sign = value < 0 ? '-' : '';
-  const absValue = Math.abs(value);
-  const rounded = Math.round(absValue / 100) * 100;
+  const absValue = Math.abs(Math.round(value));
 
-  if (rounded >= 100000000) {
-    const yi = rounded / 100000000;
-    const yiStr = yi.toFixed(2).replace(/\.?0+$/, '');
-    return sign + yiStr + '亿';
-  }
-  if (rounded >= 10000) {
-    const wan = rounded / 10000;
-    const wanStr = wan.toFixed(2).replace(/\.?0+$/, '');
-    return sign + wanStr + '万';
-  }
-  return sign + rounded.toFixed(0);
+  if (absValue === 0) return '0元';
+
+  const yi = Math.floor(absValue / 100000000);
+  const wan = Math.floor((absValue % 100000000) / 10000);
+  const yuan = absValue % 10000;
+
+  const parts: string[] = [];
+  if (yi > 0) parts.push(yi + '亿');
+  if (wan > 0) parts.push(wan + '万');
+  if (yuan > 0) parts.push(yuan + '元');
+
+  return sign + parts.join('');
 }
 
 export function formatPercent(value: number | undefined | null, decimals: number = 1): string {
@@ -50,12 +50,24 @@ export function asArray<T>(value: T[] | null | undefined | any): T[] {
   return [] as T[];
 }
 
-export function dedupeById<T extends { id?: string }>(arr: T[]): T[] {
-  const map = new Map<string, T>();
-  for (const item of arr) {
-    if (item && item.id) {
-      map.set(item.id, { ...map.get(item.id), ...item });
-    }
+function hashContent(item: any): string {
+  const content = JSON.stringify(item);
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
   }
-  return Array.from(map.values());
+  return `hash-${Math.abs(hash).toString(36)}`;
+}
+
+export function dedupeById<T extends { id?: string }>(arr: T[]): T[] {
+  const map = new Map<string, T & { id: string }>();
+  for (const item of arr) {
+    if (!item) continue;
+    const id = item.id || hashContent(item);
+    const existing = map.get(id);
+    map.set(id, { ...(existing || {}), ...item, id } as T & { id: string });
+  }
+  return Array.from(map.values()) as T[];
 }

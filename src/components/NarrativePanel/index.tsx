@@ -70,37 +70,54 @@ function applyDataOperations(operations: DataOperation[]) {
         }
         break;
       case 'add':
-        const mergeById = <T extends { id?: string }>(existing: T[], incoming: T[]): T[] => {
-          const map = new Map<string, T>();
+        const generateContentId = (item: any, prefix: string): string => {
+          if (item && item.id) return item.id;
+          const content = JSON.stringify(item);
+          let hash = 0;
+          for (let i = 0; i < content.length; i++) {
+            const char = content.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+          }
+          return `${prefix}-${Math.abs(hash).toString(36)}`;
+        };
+
+        const mergeById = <T extends { id?: string }>(existing: T[], incoming: T[], prefix: string): T[] => {
+          const map = new Map<string, T & { id: string }>();
           existing.forEach((item) => {
-            if (item && item.id) map.set(item.id, item);
+            if (!item) return;
+            const id = item.id || generateContentId(item, prefix);
+            map.set(id, { ...item, id } as T & { id: string });
           });
           incoming.forEach((item) => {
-            if (item && item.id) map.set(item.id, { ...map.get(item.id), ...item } as T);
+            if (!item) return;
+            const id = item.id || generateContentId(item, prefix);
+            const existing = map.get(id);
+            map.set(id, { ...(existing || {}), ...item, id } as T & { id: string });
           });
-          return Array.from(map.values());
+          return Array.from(map.values()) as T[];
         };
 
         if (op.target === 'products') {
-          const merged = mergeById(store.products, asArray<any>(op.data));
+          const merged = mergeById(store.products, asArray<any>(op.data), 'prod');
           store.setProducts(merged as any);
         } else if (op.target === 'employees') {
-          const merged = mergeById(store.employees, asArray<any>(op.data));
+          const merged = mergeById(store.employees, asArray<any>(op.data), 'emp');
           store.setEmployees(merged as any);
         } else if (op.target === 'strategies') {
-          const merged = mergeById(store.strategies, asArray<any>(op.data));
+          const merged = mergeById(store.strategies, asArray<any>(op.data), 'strat');
           store.setStrategies(merged as any);
         } else if (op.target === 'news') {
-          const merged = mergeById(store.news, asArray<ExternalNews>(op.data));
+          const merged = mergeById(store.news, asArray<ExternalNews>(op.data), 'news');
           store.setNews(merged);
         } else if (op.target === 'competitors') {
-          const merged = mergeById(store.competitors, asArray<Competitor>(op.data));
+          const merged = mergeById(store.competitors, asArray<Competitor>(op.data), 'comp');
           store.setCompetitors(merged);
         } else if (op.target === 'operations') {
-          const merged = mergeById(store.operations, asArray<OperationTask>(op.data));
+          const merged = mergeById(store.operations, asArray<OperationTask>(op.data), 'op');
           store.setOperations(merged);
         } else if (op.target === 'innovations') {
-          const merged = mergeById(store.innovations, asArray<InnovationProject>(op.data));
+          const merged = mergeById(store.innovations, asArray<InnovationProject>(op.data), 'innov');
           store.setInnovations(merged);
         }
         break;

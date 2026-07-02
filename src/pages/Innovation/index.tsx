@@ -12,7 +12,7 @@ const categoryColors = {
 };
 
 export default function Innovation() {
-  const { innovations } = useGameStore();
+  const { innovations, employees } = useGameStore();
 
   const validInnovations = (innovations || []).filter(p => p);
   const totalBudget = validInnovations.reduce((sum, p) => sum + (p.budget || 0), 0);
@@ -178,16 +178,26 @@ export default function Innovation() {
           </Card>
 
           <Card title="研发团队">
-            <div className="grid grid-cols-2 gap-3">
-              {['李婉清', '刘浩然', '孙伟强', '吴俊杰', '黄志强', '郑美玲'].map((member) => (
-                <div key={member} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg">
-                  <div className="w-8 h-8 bg-gradient-to-br from-accent-gold/20 to-accent-green/20 rounded-full flex items-center justify-center">
-                    <span className="text-accent-gold text-xs font-semibold">{member.charAt(0)}</span>
+            {(asArray(employees) as any[]).filter(e => e && (e.department?.includes('研发') || e.department?.includes('技术') || e.role?.includes('研发') || e.role?.includes('工程师'))).length > 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                {(asArray(employees) as any[]).filter(e => e && (e.department?.includes('研发') || e.department?.includes('技术') || e.role?.includes('研发') || e.role?.includes('工程师'))).map((member: any) => (
+                  <div key={member.id} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg">
+                    <div className="w-8 h-8 bg-gradient-to-br from-accent-gold/20 to-accent-green/20 rounded-full flex items-center justify-center">
+                      <span className="text-accent-gold text-xs font-semibold">{member.name?.charAt(0) || '?'}</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white text-sm font-medium truncate">{member.name}</p>
+                      <p className="text-text-muted text-xs truncate">{member.role}</p>
+                    </div>
                   </div>
-                  <span className="text-text-secondary text-sm">{member}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Users className="mx-auto text-text-muted mb-2" size={24} />
+                <p className="text-text-secondary text-sm">暂无研发团队成员</p>
+              </div>
+            )}
           </Card>
 
           <Card title="专利申请">

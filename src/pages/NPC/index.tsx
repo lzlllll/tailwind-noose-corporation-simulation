@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Users2, MessageCircle, Heart, Briefcase, Building2, Star, Send, Loader2, Check, Clock, AlertCircle } from 'lucide-react';
 import Card from '@/components/Card';
 import { useGameStore } from '@/stores/gameStore';
-import { generateNPCResponse, NPCChatResponse } from '@/services/aiService';
+import { generateNPCResponse, NPCChatResponse, summarizeOldMemories, compressSummariesIfNeeded } from '@/services/aiService';
 import { NPCMessage } from '@/data/mockData';
 import { asArray } from '@/lib/utils';
 
@@ -98,6 +98,34 @@ export default function NPC() {
     }
   };
 
+  const getRecentNPCMessages = (npc: typeof activeNPC): string[] => {
+    if (!npc) return [];
+    const chatHistory = asArray<NPCMessage>(npc.chatHistory);
+    return chatHistory.filter(m => m && m.content).map(m => `${m.sender === 'player' ? '玩家' : npc.name}: ${m.content}`).slice(-4);
+  };
+
+  const processNPCMemorySummaries = async (npcId: string, recentMessagesBefore: string[]) => {
+    if (recentMessagesBefore.length < 4) return;
+
+    const messageToSummarize = recentMessagesBefore[0];
+    if (!messageToSummarize || messageToSummarize.trim().length === 0) return;
+
+    try {
+      const newSummaries = await summarizeOldMemories([messageToSummarize]);
+      const npc = useGameStore.getState().npcs.find(n => n.id === npcId);
+      if (!npc) return;
+
+      const currentSummaries = asArray<string>(npc.chatSummaries);
+      let updatedSummaries = [...currentSummaries, ...newSummaries.filter(s => s && s.trim().length > 0)];
+      updatedSummaries = await compressSummariesIfNeeded(updatedSummaries);
+
+      updateNPC(npcId, { chatSummaries: updatedSummaries });
+      console.log('NPC对话记忆总结已更新，共', updatedSummaries.length, '条');
+    } catch (e) {
+      console.error('处理NPC对话记忆总结失败:', e);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !activeNPC || isNPCChatting) return;
 
@@ -114,7 +142,10 @@ export default function NPC() {
     setIsNPCChatting(true);
 
     try {
-      const response = await generateNPCResponse(activeNPC, messageInput.trim(), gameTime);
+      const recentMessages = getRecentNPCMessages(activeNPC);
+      const chatSummaries = asArray<string>(activeNPC.chatSummaries);
+
+      const response = await generateNPCResponse(activeNPC, messageInput.trim(), gameTime, chatSummaries);
 
       if (response.delayReply && response.replyAfterTime) {
         updateNPC(activeNPC.id, {
@@ -159,6 +190,8 @@ export default function NPC() {
       if (response.newMemory) {
         updateNPC(activeNPC.id, { memory: response.newMemory });
       }
+
+      await processNPCMemorySummaries(activeNPC.id, recentMessages);
     } catch (error) {
       console.error('NPC对话失败:', error);
       const errorMessage: NPCMessage = {

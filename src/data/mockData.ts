@@ -14,6 +14,10 @@ export interface Company {
   stockCode?: string;
   stockPrice?: number;
   stockExchange?: string;
+  exchangeCity?: string;
+  marketOpenTime?: string;
+  marketCloseTime?: string;
+  exchangeTimezone?: number;
   creditRating?: string;
   creditScore?: number;
   loanParameter?: number;
@@ -133,6 +137,7 @@ export interface NPC {
   systemPrompt: string;
   memory: string[];
   chatHistory: NPCMessage[];
+  chatSummaries: string[];
   isFirstMeeting: boolean;
   pendingReply?: {
     content: string;

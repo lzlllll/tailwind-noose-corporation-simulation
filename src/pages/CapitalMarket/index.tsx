@@ -205,6 +205,13 @@ export default function CapitalMarket() {
                     <p className="text-text-muted text-sm mb-1">股票代码</p>
                     <p className="text-white text-xl font-bold">{company.stockCode || '--'}</p>
                     <p className="text-text-muted text-xs">{company.stockExchange}</p>
+                    {company.marketOpenTime && company.marketCloseTime && (
+                      <p className="text-text-muted text-xs mt-1">
+                        {company.marketOpenTime}-{company.marketCloseTime}
+                        {company.exchangeCity ? ` · ${company.exchangeCity}` : ''}
+                        {company.exchangeTimezone !== undefined ? ` · UTC${company.exchangeTimezone >= 0 ? '+' : ''}${company.exchangeTimezone}` : ''}
+                      </p>
+                    )}
                   </div>
                   <div className="p-4 bg-white/5 rounded-lg">
                     <p className="text-text-muted text-sm mb-1">当前股价</p>

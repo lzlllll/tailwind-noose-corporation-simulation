@@ -225,6 +225,7 @@ export const useGameStore = create<GameStore>()(
           ...npc,
           chatHistory: asArray<NPCMessage>(npc.chatHistory),
           memory: asArray<string>(npc.memory),
+          chatSummaries: asArray<string>(npc.chatSummaries),
         }))
       }),
       updateNPC: (npcId, updates) => set((state) => ({
@@ -239,6 +240,9 @@ export const useGameStore = create<GameStore>()(
               memory: updates.memory !== undefined
                 ? asArray<string>(updates.memory)
                 : npc.memory,
+              chatSummaries: updates.chatSummaries !== undefined
+                ? asArray<string>(updates.chatSummaries)
+                : npc.chatSummaries,
             }
             : npc
         ),

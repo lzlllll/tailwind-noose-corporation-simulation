@@ -623,7 +623,8 @@ employees: [emp-001, emp-002]
 export async function generateNPCResponse(
   npc: NPC,
   playerMessage: string,
-  gameTime: string
+  gameTime: string,
+  chatSummaries?: string[]
 ): Promise<NPCChatResponse> {
   const { aiSettings } = useGameStore.getState();
 
@@ -650,8 +651,15 @@ ${npc.systemPrompt}
 【记忆】
 ${npc.isFirstMeeting ? '这是第一次见面，还没有建立任何记忆。' : asArray<string>(npc.memory).length > 0 ? asArray<string>(npc.memory).map(m => `- ${m}`).join('\n') : '暂无特殊记忆。'}
 
-【对话历史】
-${asArray<NPCMessage>(npc.chatHistory).length > 0 ? asArray<NPCMessage>(npc.chatHistory).slice(-5).map(msg => `${msg.sender === 'player' ? '玩家' : npc.name}: ${msg.content}`).join('\n') : '无历史对话'}
+【更早对话摘要】（每条≤100字，已压缩以节省token）
+${asArray<string>(chatSummaries).filter(s => s && s.trim().length > 0).length > 0
+        ? asArray<string>(chatSummaries).filter(s => s && s.trim().length > 0).map((s, i) => `[${i + 1}] ${s}`).join('\n')
+        : '无更早对话记录'}
+
+【最近4条对话】（完整保留）
+${asArray<NPCMessage>(npc.chatHistory).length > 0
+        ? asArray<NPCMessage>(npc.chatHistory).slice(-4).map(msg => `${msg.sender === 'player' ? '玩家' : npc.name}: ${msg.content}`).join('\n')
+        : '无历史对话'}
 
 【回复行为规则】
 根据你的性格和立场，你可以选择以下回复方式：

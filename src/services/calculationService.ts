@@ -323,17 +323,44 @@ export function calculateStockPrices(): Stock[] {
   const competitors = store.competitors;
   const suppliers = store.suppliers;
   const company = store.company;
+  const gameTime = store.gameTime;
 
   const stocks: Stock[] = [];
 
   const perfIdx = (v: number | undefined) => (v === undefined ? 50 : Math.max(0, Math.min(100, v)));
   const expIdx = (v: number | undefined) => (v === undefined ? 50 : Math.max(0, Math.min(100, v)));
 
+  const isMarketOpen = (
+    time: string,
+    openTime: string,
+    closeTime: string,
+    timezone: number
+  ): boolean => {
+    if (!time || !openTime || !closeTime) return true;
+
+    const gameDate = new Date(time);
+    if (isNaN(gameDate.getTime())) return true;
+
+    const baseTimezone = 8;
+    const offsetDiff = timezone - baseTimezone;
+    const exchangeDate = new Date(gameDate.getTime() + offsetDiff * 60 * 60 * 1000);
+
+    const dayOfWeek = exchangeDate.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) return false;
+
+    const exchangeHour = exchangeDate.getHours();
+    const exchangeMinute = exchangeDate.getMinutes();
+    const exchangeTimeStr = `${exchangeHour.toString().padStart(2, '0')}:${exchangeMinute.toString().padStart(2, '0')}`;
+
+    return exchangeTimeStr >= openTime && exchangeTimeStr < closeTime;
+  };
+
   const computeStockMetrics = (
     basePrice: number,
     performance: number,
     expectation: number,
-    shares: number
+    shares: number,
+    marketOpen: boolean = true
   ) => {
     const performanceFactor = performance / 100;
     const expectationFactor = expectation / 100;
@@ -341,13 +368,22 @@ export function calculateStockPrices(): Stock[] {
     const gapFactor = indexGap / 100;
 
     const intrinsicValue = basePrice * (0.6 + performanceFactor * 0.4 + expectationFactor * 0.2 + gapFactor * 0.3);
-    const dailyNoise = (Math.random() * 0.06 - 0.03);
-    const currentPrice = intrinsicValue * (1 + dailyNoise);
 
-    const trendDirection = gapFactor >= 0 ? 1 : -1;
-    const trendMagnitude = Math.min(Math.abs(gapFactor) * 0.06, 0.06);
-    const noiseOffset = (Math.random() * 0.04 - 0.02);
-    const previousClose = currentPrice / (1 + trendDirection * trendMagnitude + noiseOffset);
+    let currentPrice: number;
+    let previousClose: number;
+
+    if (marketOpen) {
+      const dailyNoise = (Math.random() * 0.06 - 0.03);
+      currentPrice = intrinsicValue * (1 + dailyNoise);
+
+      const trendDirection = gapFactor >= 0 ? 1 : -1;
+      const trendMagnitude = Math.min(Math.abs(gapFactor) * 0.06, 0.06);
+      const noiseOffset = (Math.random() * 0.04 - 0.02);
+      previousClose = currentPrice / (1 + trendDirection * trendMagnitude + noiseOffset);
+    } else {
+      currentPrice = intrinsicValue;
+      previousClose = intrinsicValue;
+    }
 
     const change = currentPrice - previousClose;
     const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
@@ -364,7 +400,7 @@ export function calculateStockPrices(): Stock[] {
       peRatio: Math.round(peRatio * 100) / 100,
       high52w: Math.round(intrinsicValue * 1.5 * 100) / 100,
       low52w: Math.round(intrinsicValue * 0.6 * 100) / 100,
-      volume: Math.floor((0.5 + Math.random() * 0.5) * shares * 0.1),
+      volume: marketOpen ? Math.floor((0.5 + Math.random() * 0.5) * shares * 0.1) : 0,
     };
   };
 
@@ -375,7 +411,15 @@ export function calculateStockPrices(): Stock[] {
       ? company.stockPrice
       : 10 + (company.marketShare || 5) * 2;
     const shares = Math.max(1000000, Math.floor((company.marketValue || basePrice * 1000000) / basePrice));
-    const m = computeStockMetrics(basePrice, perf, exp, shares);
+
+    const marketOpen = isMarketOpen(
+      gameTime,
+      company.marketOpenTime || '09:30',
+      company.marketCloseTime || '15:00',
+      company.exchangeTimezone ?? 8
+    );
+
+    const m = computeStockMetrics(basePrice, perf, exp, shares, marketOpen);
 
     stocks.push({
       id: 'stock-player',
@@ -395,7 +439,10 @@ export function calculateStockPrices(): Stock[] {
     const exp = expIdx(comp.marketExpectationIndex);
     const basePrice = 10 + (comp.marketShare || 5) * 2;
     const shares = Math.max(1000000, Math.floor((comp.revenue || basePrice * 1000000) / basePrice) * 10);
-    const m = computeStockMetrics(basePrice, perf, exp, shares);
+
+    const marketOpen = isMarketOpen(gameTime, '09:30', '15:00', 8);
+
+    const m = computeStockMetrics(basePrice, perf, exp, shares, marketOpen);
 
     stocks.push({
       id: `stock-comp-${index}`,
@@ -415,7 +462,10 @@ export function calculateStockPrices(): Stock[] {
     const exp = expIdx(sup.marketExpectationIndex);
     const basePrice = 5 + (sup.quality || 50) * 0.1;
     const shares = 10000000;
-    const m = computeStockMetrics(basePrice, perf, exp, shares);
+
+    const marketOpen = isMarketOpen(gameTime, '09:30', '15:00', 8);
+
+    const m = computeStockMetrics(basePrice, perf, exp, shares, marketOpen);
 
     stocks.push({
       id: `stock-sup-${index}`,
