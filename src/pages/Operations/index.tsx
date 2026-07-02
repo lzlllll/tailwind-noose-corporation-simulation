@@ -62,6 +62,7 @@ export default function Operations() {
   ];
 
   const filteredTasks = (operations || []).filter((task) => {
+    if (!task) return false;
     const matchesSearch = (task.title || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
       (task.assignee || '').toLowerCase().includes((searchTerm || '').toLowerCase());
     const matchesStatus = selectedStatus === 'all' || task.status === selectedStatus;
@@ -69,10 +70,10 @@ export default function Operations() {
   });
 
   const stats = {
-    total: (operations || []).length,
-    pending: (operations || []).filter(t => t.status === 'pending').length,
-    inProgress: (operations || []).filter(t => t.status === 'in-progress').length,
-    completed: (operations || []).filter(t => t.status === 'completed').length,
+    total: (operations || []).filter(t => t).length,
+    pending: (operations || []).filter(t => t && t.status === 'pending').length,
+    inProgress: (operations || []).filter(t => t && t.status === 'in-progress').length,
+    completed: (operations || []).filter(t => t && t.status === 'completed').length,
   };
 
   const handleTabChange = (tab: TabType) => {

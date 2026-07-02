@@ -59,7 +59,7 @@ export default function NPC() {
   const activeNPC = (npcs || []).find(n => n.id === activeNPCId);
 
   const unreadCount = activeNPC
-    ? asArray<NPCMessage>(activeNPC.chatHistory).filter(m => m.sender === 'npc' && !m.isRead).length
+    ? asArray<NPCMessage>(activeNPC.chatHistory).filter(m => m && m.sender === 'npc' && !m.isRead).length
     : 0;
 
   useEffect(() => {
@@ -87,7 +87,7 @@ export default function NPC() {
     const npc = (npcs || []).find(n => n.id === npcId);
     if (npc) {
       const chatHistory = asArray<NPCMessage>(npc.chatHistory);
-      const unreadMessages = chatHistory.filter(m => m.sender === 'npc' && !m.isRead);
+      const unreadMessages = chatHistory.filter(m => m && m.sender === 'npc' && !m.isRead);
       if (unreadMessages.length > 0) {
         updateNPC(npcId, {
           chatHistory: chatHistory.map(m =>
@@ -196,7 +196,7 @@ export default function NPC() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {(npcs || []).map((npc) => {
                 const relLevel = getRelationshipLevel(npc.relationship);
-                const npcUnread = asArray<NPCMessage>(npc.chatHistory).filter(m => m.sender === 'npc' && !m.isRead).length;
+                const npcUnread = asArray<NPCMessage>(npc.chatHistory).filter(m => m && m.sender === 'npc' && !m.isRead).length;
                 const hasPendingReply = npc.pendingReply && !parseTime(gameTime, npc.pendingReply.replyAfterTime);
 
                 return (
@@ -401,7 +401,7 @@ export default function NPC() {
           <Card title="关系概览">
             <div className="space-y-3">
               {relationshipLevels.map((level) => {
-                const count = npcs.filter(n => n.relationship >= level.min && n.relationship <= level.max).length;
+                const count = npcs.filter(n => n && n.relationship >= level.min && n.relationship <= level.max).length;
                 return (
                   <div key={level.label} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

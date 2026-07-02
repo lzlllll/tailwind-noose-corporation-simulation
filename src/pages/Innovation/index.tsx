@@ -14,10 +14,11 @@ const categoryColors = {
 export default function Innovation() {
   const { innovations } = useGameStore();
 
-  const totalBudget = (innovations || []).reduce((sum, p) => sum + p.budget, 0);
-  const totalSpent = (innovations || []).reduce((sum, p) => sum + p.spent, 0);
-  const avgProgress = (innovations || []).length > 0
-    ? Math.round((innovations || []).reduce((sum, p) => sum + p.progress, 0) / (innovations || []).length)
+  const validInnovations = (innovations || []).filter(p => p);
+  const totalBudget = validInnovations.reduce((sum, p) => sum + (p.budget || 0), 0);
+  const totalSpent = validInnovations.reduce((sum, p) => sum + (p.spent || 0), 0);
+  const avgProgress = validInnovations.length > 0
+    ? Math.round(validInnovations.reduce((sum, p) => sum + (p.progress || 0), 0) / validInnovations.length)
     : 0;
 
   const milestones: { id: number; title: string; date: string; status: string }[] = [];
@@ -48,7 +49,7 @@ export default function Innovation() {
         />
         <StatCard
           title="项目数量"
-          value={(innovations || []).length}
+          value={validInnovations.length}
           unit="个"
           change={0}
           icon={<Target className="text-accent-blue" size={24} />}

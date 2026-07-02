@@ -35,19 +35,20 @@ export default function Organization() {
   ];
 
   const filteredEmployees = (employees || []).filter((employee) => {
+    if (!employee) return false;
     const matchesSearch = (employee.name || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
       (employee.role || '').toLowerCase().includes((searchTerm || '').toLowerCase());
     const matchesDept = selectedDepartment === 'all' || employee.department === selectedDepartment;
     return matchesSearch && matchesDept;
   });
 
-  const managementEmployees = (employees || []).filter(e => e.level === 'executive' || e.level === 'manager');
+  const managementEmployees = (employees || []).filter(e => e && (e.level === 'executive' || e.level === 'manager'));
 
   const stats = {
-    total: (employees || []).length,
-    executives: (employees || []).filter(e => e.level === 'executive').length,
-    managers: (employees || []).filter(e => e.level === 'manager').length,
-    seniors: (employees || []).filter(e => e.level === 'senior').length,
+    total: (employees || []).filter(e => e).length,
+    executives: (employees || []).filter(e => e && e.level === 'executive').length,
+    managers: (employees || []).filter(e => e && e.level === 'manager').length,
+    seniors: (employees || []).filter(e => e && e.level === 'senior').length,
   };
 
   const handleTabChange = (tab: TabType) => {
@@ -127,7 +128,7 @@ export default function Organization() {
       <Card className="p-6">
         <h2 className="text-lg font-semibold text-white mb-4">高管团队</h2>
         <div className="space-y-4">
-          {managementEmployees.filter(e => e.level === 'executive').map((employee) => (
+          {managementEmployees.filter(e => e && e.level === 'executive').map((employee) => (
             <div key={employee.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-lg">
               <div className="w-14 h-14 bg-gradient-to-br from-accent-gold/30 to-accent-green/30 rounded-full flex items-center justify-center">
                 <span className="text-accent-gold font-bold text-lg">{employee.avatar}</span>
@@ -152,7 +153,7 @@ export default function Organization() {
       <Card className="p-6">
         <h2 className="text-lg font-semibold text-white mb-4">中层管理</h2>
         <div className="grid grid-cols-2 gap-4">
-          {managementEmployees.filter(e => e.level === 'manager').map((employee) => (
+          {managementEmployees.filter(e => e && e.level === 'manager').map((employee) => (
             <div key={employee.id} className="p-4 bg-white/5 rounded-lg">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-accent-blue/20 rounded-full flex items-center justify-center">

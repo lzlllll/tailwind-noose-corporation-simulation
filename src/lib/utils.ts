@@ -35,7 +35,7 @@ export function formatPercent(value: number | undefined | null, decimals: number
 
 export function asArray<T>(value: T[] | null | undefined | any): T[] {
   if (Array.isArray(value)) {
-    return value as T[];
+    return value.filter((item) => item !== null && item !== undefined) as T[];
   }
   if (value === null || value === undefined) {
     return [] as T[];

@@ -96,19 +96,19 @@ function applyDataOperations(operations: DataOperation[]) {
       case 'delete':
         if (op.target === 'products') {
           const productIds = asArray<string>(op.data);
-          const filteredProducts = store.products.filter((p) => !productIds.includes(p.id));
+          const filteredProducts = store.products.filter((p) => p && !productIds.includes(p.id));
           store.setProducts(filteredProducts);
         } else if (op.target === 'employees') {
           const employeeIds = asArray<string>(op.data);
-          const filteredEmployees = store.employees.filter((e) => !employeeIds.includes(e.id));
+          const filteredEmployees = store.employees.filter((e) => e && !employeeIds.includes(e.id));
           store.setEmployees(filteredEmployees);
         } else if (op.target === 'news') {
           const newsIds = asArray<string>(op.data);
-          const filteredNews = store.news.filter((n) => !newsIds.includes(n.id));
+          const filteredNews = store.news.filter((n) => n && !newsIds.includes(n.id));
           store.setNews(filteredNews);
         } else if (op.target === 'operations') {
           const operationIds = asArray<string>(op.data);
-          const filteredOperations = store.operations.filter((o) => !operationIds.includes(o.id));
+          const filteredOperations = store.operations.filter((o) => o && !operationIds.includes(o.id));
           store.setOperations(filteredOperations);
         }
         break;

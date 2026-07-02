@@ -19,9 +19,10 @@ const statusMap: Record<string, { label: string; color: string; bgColor: string 
 export default function Strategy() {
   const { strategies } = useGameStore();
 
-  const inProgressCount = strategies.filter(s => s.status === 'in-progress').length;
-  const totalBudget = strategies.reduce((sum, s) => sum + s.budget, 0);
-  const totalSpent = strategies.reduce((sum, s) => sum + s.spent, 0);
+  const validStrategies = strategies.filter(s => s);
+  const inProgressCount = validStrategies.filter(s => s.status === 'in-progress').length;
+  const totalBudget = validStrategies.reduce((sum, s) => sum + (s.budget || 0), 0);
+  const totalSpent = validStrategies.reduce((sum, s) => sum + (s.spent || 0), 0);
 
   return (
     <div className="p-8">

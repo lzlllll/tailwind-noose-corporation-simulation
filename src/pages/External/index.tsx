@@ -15,17 +15,18 @@ export default function External() {
   const [selectedNews, setSelectedNews] = useState<string | null>(null);
   const { news, competitors } = useGameStore();
 
-  const totalMarketSize = (competitors || []).length > 0
-    ? Math.round((competitors || []).reduce((sum, c) => sum + (c.revenue || 0), 0) / ((competitors || []).reduce((sum, c) => sum + (c.marketShare || 0), 0) / 100 || 1))
+  const validCompetitors = (competitors || []).filter(c => c);
+  const totalMarketSize = validCompetitors.length > 0
+    ? Math.round(validCompetitors.reduce((sum, c) => sum + (c.revenue || 0), 0) / ((validCompetitors.reduce((sum, c) => sum + (c.marketShare || 0), 0) / 100) || 1))
     : 0;
-  const avgMarketShare = (competitors || []).length > 0
-    ? safeToFixed((competitors || []).reduce((sum, c) => sum + (c.marketShare || 0), 0) / (competitors || []).length, 1)
+  const avgMarketShare = validCompetitors.length > 0
+    ? safeToFixed(validCompetitors.reduce((sum, c) => sum + (c.marketShare || 0), 0) / validCompetitors.length, 1)
     : '0';
 
   const marketStats = {
     totalMarketSize,
     growthRate: 18.5,
-    competitors: (competitors || []).length,
+    competitors: validCompetitors.length,
     avgMarketShare: parseFloat(avgMarketShare),
   };
 
@@ -149,7 +150,7 @@ export default function External() {
                   </div>
                 </div>
               ))}
-              {(competitors || []).length === 0 && (
+              {validCompetitors.length === 0 && (
                 <div className="text-center text-text-muted py-8">暂无竞争对手数据</div>
               )}
             </div>
@@ -175,16 +176,16 @@ export default function External() {
                   <span className="text-text-secondary text-sm">{policy.name}</span>
                   <div className="flex items-center gap-2">
                     <span className={`text-xs px-2 py-0.5 rounded ${policy.status === 'active'
-                        ? 'bg-accent-green/20 text-accent-green'
-                        : 'bg-status-warning/20 text-status-warning'
+                      ? 'bg-accent-green/20 text-accent-green'
+                      : 'bg-status-warning/20 text-status-warning'
                       }`}>
                       {policy.status === 'active' ? '生效中' : '草案'}
                     </span>
                     <span className={`text-xs px-2 py-0.5 rounded ${policy.impact === 'high'
-                        ? 'bg-status-danger/20 text-status-danger'
-                        : policy.impact === 'medium'
-                          ? 'bg-status-warning/20 text-status-warning'
-                          : 'bg-accent-green/20 text-accent-green'
+                      ? 'bg-status-danger/20 text-status-danger'
+                      : policy.impact === 'medium'
+                        ? 'bg-status-warning/20 text-status-warning'
+                        : 'bg-accent-green/20 text-accent-green'
                       }`}>
                       {policy.impact === 'high' ? '高影响' : policy.impact === 'medium' ? '中影响' : '低影响'}
                     </span>

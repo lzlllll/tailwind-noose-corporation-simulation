@@ -27,6 +27,7 @@ export default function Products() {
   ];
 
   const filteredProducts = (products || []).filter((product) => {
+    if (!product) return false;
     const matchesSearch = (product.name || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
       (product.category || '').toLowerCase().includes((searchTerm || '').toLowerCase());
     const matchesStatus = selectedStatus === 'all' || product.status === selectedStatus;

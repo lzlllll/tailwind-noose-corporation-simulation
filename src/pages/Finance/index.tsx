@@ -64,8 +64,8 @@ export default function Finance() {
 
   const cashFlowSummary = [];
 
-  const incomeItems = (cashFlow || []).filter(item => item.type === 'income');
-  const expenseItems = (cashFlow || []).filter(item => item.type === 'expense');
+  const incomeItems = (cashFlow || []).filter(item => item && item.type === 'income');
+  const expenseItems = (cashFlow || []).filter(item => item && item.type === 'expense');
 
   const totalIncome = incomeItems.reduce((sum, item) => sum + item.amount, 0);
   const totalExpense = expenseItems.reduce((sum, item) => sum + item.amount, 0);
